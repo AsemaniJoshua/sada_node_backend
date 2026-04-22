@@ -1,7 +1,7 @@
 // Importing necessary modules and files
 import express from "express";
 import cors from "cors";
-import { customError } from "./utils/error/custom_error";
+import { customError } from "./utils/error/custom_error.js";
 
 
 // Initializing the express application

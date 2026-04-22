@@ -1,5 +1,5 @@
 // the error middleware will catch any error thrown in the application and send a response to the client with the error message and status code
-import { AppError } from "./AppError";
+import { AppError } from "./AppError.js";
 import "dotenv/config";
 
 const customError = (err, req, res, next) => {
