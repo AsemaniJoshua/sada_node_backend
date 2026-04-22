@@ -1,0 +1,46 @@
+{
+  "name": "sada_backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AsemaniJoshua/sada_node_backend.git"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "argon2": "^0.44.0",
+    "axios": "^1.13.6",
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.6",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^8.0.3",
+    "paystack-node": "^0.3.0",
+    "winston": "^3.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "nodemon": "^3.1.14",
+    "prisma": "^7.8.0",
+    "ts-node": "^10.9.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/AsemaniJoshua/sada_node_backend/issues"
+  },
+  "homepage": "https://github.com/AsemaniJoshua/sada_node_backend#readme"
+}
