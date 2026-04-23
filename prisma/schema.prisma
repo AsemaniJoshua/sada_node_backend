@@ -68,6 +68,18 @@ model Project {
   updatedAt   DateTime      @updatedAt
 }
 
+// BlogPost model - Blog articles with content and images
+model BlogPost {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.LongText
+  author    String
+  date      DateTime @default(now())
+  images    Json     // [{ url, public_id }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Enum for project status
 enum ProjectStatus {
   planning
