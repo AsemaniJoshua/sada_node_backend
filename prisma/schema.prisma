@@ -35,8 +35,43 @@ model RefreshToken {
   createdAt DateTime  @default(now())
 }
 
-// Enum for user roles
-enum Role {
-  admin
-  user
+// Home model - Singleton page for hero, statistics, and featured projects
+model Home {
+  id                String    @id @default(uuid())
+  hero              Json      // { title, subtitle, image: { url, public_id } }
+  statistics        Json      // [{ label, value }]
+  featuredProjects  Json      // [{ id, title, description, image: { url, public_id } }]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// About model - Singleton page for mission, vision, and organization details
+model About {
+  id                String    @id @default(uuid())
+  mission           String    @db.LongText
+  vision            String    @db.LongText
+  coreValues        Json      // [string]
+  history           String    @db.LongText
+  membership        Json      // { benefits: [string], requirements: [string] }
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Project model - Showcase projects with multiple images
+model Project {
+  id                String      @id @default(uuid())
+  title             String
+  description       String      @db.LongText
+  status            ProjectStatus
+  images            Json        // [{ url, public_id }]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+// Enum for project status
+enum ProjectStatus {
+  planning
+  active
+  completed
+  on_hold
 }

@@ -3,6 +3,10 @@ import express from "express";
 import cors from "cors";
 import { customError } from "./utils/error/custom_error.js";
 import authRouter from "./routers/auth/auth.js";
+import publicHomeRouter from "./routers/public/home.js";
+import publicAboutRouter from "./routers/public/about.js";
+import adminHomeRouter from "./routers/admin/home.js";
+import adminAboutRouter from "./routers/admin/about.js";
 
 
 // Initializing the express application
@@ -26,6 +30,12 @@ app.use(cors({
 
 // Importing routes
 app.use('/api/auth', authRouter);
+// Public routes
+app.use('/api/home', publicHomeRouter);
+app.use('/api/about', publicAboutRouter);
+// Admin routes
+app.use('/api/admin/home', adminHomeRouter);
+app.use('/api/admin/about', adminAboutRouter);
 
 
 // Error handling middleware
