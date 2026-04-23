@@ -3,10 +3,10 @@ import { AppError } from "./AppError.js";
 import "dotenv/config";
 
 const customError = (err, req, res, next) => {
-    // if the error is an instance of AppError, send the error message and status code to the client
-    statusCode = err.statusCode || 500;
-    message = err.message || 'Internal Server Error';
-    isOperational = err.isOperational || false;
+    // Extract error details with defaults
+    let statusCode = err.statusCode || 500;
+    let message = err.message || 'Internal Server Error';
+    let isOperational = err.isOperational || false;
 
     // Error response object
     const errorResponse = {

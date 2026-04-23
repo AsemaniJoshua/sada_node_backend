@@ -2,6 +2,7 @@
 import express from "express";
 import cors from "cors";
 import { customError } from "./utils/error/custom_error.js";
+import authRouter from "./routers/auth/auth.js";
 
 
 // Initializing the express application
@@ -24,7 +25,7 @@ app.use(cors({
 
 
 // Importing routes
-
+app.use('/api/auth', authRouter);
 
 
 // Error handling middleware
