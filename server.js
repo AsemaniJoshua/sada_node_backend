@@ -5,8 +5,10 @@ import { customError } from "./utils/error/custom_error.js";
 import authRouter from "./routers/auth/auth.js";
 import publicHomeRouter from "./routers/public/home.js";
 import publicAboutRouter from "./routers/public/about.js";
+import publicProjectRouter from "./routers/public/projects.js";
 import adminHomeRouter from "./routers/admin/home.js";
 import adminAboutRouter from "./routers/admin/about.js";
+import adminProjectRouter from "./routers/admin/projects.js";
 
 
 // Initializing the express application
@@ -33,9 +35,11 @@ app.use('/api/auth', authRouter);
 // Public routes
 app.use('/api/home', publicHomeRouter);
 app.use('/api/about', publicAboutRouter);
+app.use('/api/projects', publicProjectRouter);
 // Admin routes
 app.use('/api/admin/home', adminHomeRouter);
 app.use('/api/admin/about', adminAboutRouter);
+app.use('/api/admin/projects', adminProjectRouter);
 
 
 // Error handling middleware

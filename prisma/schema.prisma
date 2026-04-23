@@ -62,7 +62,7 @@ model Project {
   id                String      @id @default(uuid())
   title             String
   description       String      @db.LongText
-  status            ProjectStatus
+  status            ProjectStatus @default(completed)
   images            Json        // [{ url, public_id }]
   createdAt         DateTime    @default(now())
   updatedAt         DateTime    @updatedAt
@@ -74,4 +74,10 @@ enum ProjectStatus {
   active
   completed
   on_hold
+}
+
+// Enum for user roles
+enum Role {
+  admin
+  user
 }
