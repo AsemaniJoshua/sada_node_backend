@@ -15,57 +15,57 @@ datasource db {
 
 // User model for authentication and authorization
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
+  id            String         @id @default(uuid())
+  email         String         @unique
   password      String
   name          String
-  role          Role      @default(user)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role           @default(user)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
 }
 
 // RefreshToken model for token management
 model RefreshToken {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String    @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
   expiresAt DateTime
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
 
 // Home model - Singleton page for hero, statistics, and featured projects
 model Home {
-  id                String    @id @default(uuid())
-  hero              Json      // { title, subtitle, image: { url, public_id } }
-  statistics        Json      // [{ label, value }]
-  featuredProjects  Json      // [{ id, title, description, image: { url, public_id } }]
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id               String   @id @default(uuid())
+  hero             Json // { title, subtitle, image: { url, public_id } }
+  statistics       Json // [{ label, value }]
+  featuredProjects Json // [{ id, title, description, image: { url, public_id } }]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 // About model - Singleton page for mission, vision, and organization details
 model About {
-  id                String    @id @default(uuid())
-  mission           String    @db.LongText
-  vision            String    @db.LongText
-  coreValues        Json      // [string]
-  history           String    @db.LongText
-  membership        Json      // { benefits: [string], requirements: [string] }
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id         String   @id @default(uuid())
+  mission    String   @db.LongText
+  vision     String   @db.LongText
+  coreValues Json // [string]
+  history    String   @db.LongText
+  membership Json // { benefits: [string], requirements: [string] }
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // Project model - Showcase projects with multiple images
 model Project {
-  id                String      @id @default(uuid())
-  title             String
-  description       String      @db.LongText
-  status            ProjectStatus @default(completed)
-  images            Json        // [{ url, public_id }]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id          String        @id @default(uuid())
+  title       String
+  description String        @db.LongText
+  status      ProjectStatus @default(completed)
+  images      Json // [{ url, public_id }]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 // Enum for project status
