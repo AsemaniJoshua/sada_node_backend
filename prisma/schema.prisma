@@ -150,6 +150,26 @@ model Leadership {
   updatedAt DateTime @updatedAt
 }
 
+model Payment {
+  id             String   @id @default(uuid())
+  memberId       String
+  amount         Decimal  @db.Decimal(10, 2)
+  amountWithFee  Decimal  @db.Decimal(10, 2)
+  purpose        String
+  status         PaymentStatus @default(pending)
+  reference      String   @unique
+  date           DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// Enum for payment status
+enum PaymentStatus {
+  pending
+  successful
+  failed
+}
+
 // Enum for project status
 enum ProjectStatus {
   planning
