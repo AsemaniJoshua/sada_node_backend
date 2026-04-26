@@ -112,6 +112,15 @@ model Testimonial {
   updatedAt DateTime @updatedAt
 }
 
+// FAQ model - Frequently asked questions
+model FAQ {
+  id        String   @id @default(uuid())
+  question  String
+  answer    String   @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Enum for project status
 enum ProjectStatus {
   planning
