@@ -7,10 +7,12 @@ import publicHomeRouter from "./routers/public/home.js";
 import publicAboutRouter from "./routers/public/about.js";
 import publicProjectRouter from "./routers/public/projects.js";
 import publicBlogRouter from "./routers/public/blog.js";
+import publicGalleryRouter from "./routers/public/gallery.js";
 import adminHomeRouter from "./routers/admin/home.js";
 import adminAboutRouter from "./routers/admin/about.js";
 import adminProjectRouter from "./routers/admin/projects.js";
 import adminBlogRouter from "./routers/admin/blog.js";
+import adminGalleryRouter from "./routers/admin/gallery.js";
 
 
 // Initializing the express application
@@ -39,11 +41,13 @@ app.use('/api/home', publicHomeRouter);
 app.use('/api/about', publicAboutRouter);
 app.use('/api/projects', publicProjectRouter);
 app.use('/api/blog', publicBlogRouter);
+app.use('/api/gallery', publicGalleryRouter);
 // Admin routes
 app.use('/api/admin/home', adminHomeRouter);
 app.use('/api/admin/about', adminAboutRouter);
 app.use('/api/admin/projects', adminProjectRouter);
 app.use('/api/admin/blog', adminBlogRouter);
+app.use('/api/admin/gallery', adminGalleryRouter);
 
 
 // Error handling middleware

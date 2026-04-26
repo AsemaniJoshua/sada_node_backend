@@ -80,6 +80,15 @@ model BlogPost {
   updatedAt DateTime @updatedAt
 }
 
+// Gallery model - Photo gallery with multiple images per entry
+model Gallery {
+  id        String   @id @default(uuid())
+  title     String
+  images    Json     // [{ url, public_id }]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Enum for project status
 enum ProjectStatus {
   planning
