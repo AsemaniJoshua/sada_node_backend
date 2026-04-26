@@ -8,7 +8,7 @@ WORKDIR /sada_backend
 COPY package*.json ./
 
 # install dependencies with no cache to reduce image size
-RUN npm install --no-cache
+RUN npm install --no-cache --ignore-engines
 
 # copy the rest of the application code to the working directory
 COPY . .
@@ -23,7 +23,7 @@ RUN npx prisma generate
 RUN npx prisma migrate deploy
 
 # expose the port the app runs on
-EXPOSE 3000
+EXPOSE 5000
 
 # start the application
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
