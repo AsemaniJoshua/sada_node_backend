@@ -59,6 +59,7 @@ const initiatePayment = async (req, res, next) => {
                 email: email.trim(),
                 amount: amountInPesewas,
                 reference,
+                callback_url: process.env.PAYSTACK_CALLBACK_URL,
                 metadata: {
                     memberId: memberId.trim(),
                     baseAmount,
