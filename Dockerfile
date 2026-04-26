@@ -14,7 +14,7 @@ RUN npm install --no-cache
 COPY . .
 
 # set the database URL environment variable for Prisma
-# ENV DATABASE_URL="mysql://avnadmin:AVNS_qFEkifx_DQcfRfCA0U_@mysql-2663df75-joshuaasemani27-1d15.f.aivencloud.com:11169/anglican_school_system"
+ENV DATABASE_URL="mysql://avnadmin:AVNS_qFEkifx_DQcfRfCA0U_@mysql-2663df75-joshuaasemani27-1d15.f.aivencloud.com:11169/sada"
 
 # generate prisma client
 RUN npx prisma generate
