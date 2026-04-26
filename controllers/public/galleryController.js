@@ -1,8 +1,6 @@
 // Public gallery controller
-import { PrismaClient } from '@prisma/client';
 import { AppError } from '../../utils/error/AppError.js';
-
-const prisma = new PrismaClient();
+import { prisma } from '../../config/config.js';
 
 // Get all gallery images
 const getAllGalleries = async (req, res, next) => {

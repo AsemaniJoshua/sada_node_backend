@@ -1,10 +1,8 @@
 // Admin gallery controller with CRUD operations and image management
-import { PrismaClient } from '@prisma/client';
 import { AppError } from '../../utils/error/AppError.js';
+import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import fs from 'fs';
-
-const prisma = new PrismaClient();
 
 // Create new gallery entry with multiple image uploads
 const createGallery = async (req, res, next) => {

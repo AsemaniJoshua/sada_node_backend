@@ -89,6 +89,18 @@ model Gallery {
   updatedAt DateTime @updatedAt
 }
 
+// Contact model - Form submissions from website visitors (append-only)
+model Contact {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.LongText
+  date      DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Enum for project status
 enum ProjectStatus {
   planning
