@@ -12,6 +12,8 @@ import publicContactRouter from "./routers/public/contact.js";
 import publicTestimonialsRouter from "./routers/public/testimonials.js";
 import publicFAQsRouter from "./routers/public/faqs.js";
 import publicJourneyRouter from "./routers/public/journey.js";
+import publicAnnouncementsRouter from "./routers/public/announcements.js";
+import publicLeadershipRouter from "./routers/public/leadership.js";
 import adminHomeRouter from "./routers/admin/home.js";
 import adminAboutRouter from "./routers/admin/about.js";
 import adminProjectRouter from "./routers/admin/projects.js";
@@ -21,6 +23,8 @@ import adminContactRouter from "./routers/admin/contact.js";
 import adminTestimonialsRouter from "./routers/admin/testimonials.js";
 import adminFAQsRouter from "./routers/admin/faqs.js";
 import adminJourneyRouter from "./routers/admin/journey.js";
+import adminAnnouncementsRouter from "./routers/admin/announcements.js";
+import adminLeadershipRouter from "./routers/admin/leadership.js";
 
 
 // Initializing the express application
@@ -54,6 +58,8 @@ app.use('/api/contact', publicContactRouter);
 app.use('/api/testimonials', publicTestimonialsRouter);
 app.use('/api/faqs', publicFAQsRouter);
 app.use('/api/journey', publicJourneyRouter);
+app.use('/api/announcements', publicAnnouncementsRouter);
+app.use('/api/leadership', publicLeadershipRouter);
 // Admin routes
 app.use('/api/admin/home', adminHomeRouter);
 app.use('/api/admin/about', adminAboutRouter);
@@ -64,6 +70,8 @@ app.use('/api/admin/contact', adminContactRouter);
 app.use('/api/admin/testimonials', adminTestimonialsRouter);
 app.use('/api/admin/faqs', adminFAQsRouter);
 app.use('/api/admin/journey', adminJourneyRouter);
+app.use('/api/admin/announcements', adminAnnouncementsRouter);
+app.use('/api/admin/leadership', adminLeadershipRouter);
 
 
 // Error handling middleware
