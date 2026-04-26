@@ -80,6 +80,22 @@ app.use('/api/admin/payments', adminPaymentsRouter);
 app.use('/api/admin/statistics', adminStatisticsRouter);
 
 
+
+// Default route for testing server
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'Welcome to the Sada API',
+        version: '1.0.0',
+        data: {
+            timestamp: new Date().toISOString(),
+             uptime: process.uptime(),
+             environment: process.env.NODE_ENV || 'Production',
+        }
+    });
+});
+
+
 // Error handling middleware
 app.use(customError);
 
