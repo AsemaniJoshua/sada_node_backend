@@ -15,14 +15,15 @@ datasource db {
 
 // User model for authentication and authorization
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  password      String
-  name          String
-  role          Role           @default(user)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
+  id              String            @id @default(uuid())
+  email           String            @unique
+  password        String
+  name            String
+  role            Role              @default(user)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  refreshTokens   RefreshToken[]
+  passwordResets  PasswordReset[]
 }
 
 // RefreshToken model for token management
@@ -33,6 +34,19 @@ model RefreshToken {
   token     String   @unique
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+// PasswordReset model for OTP-based password reset
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otp       String
+  otpHash   String
+  isVerified Boolean @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 // Home model - Singleton page for hero, statistics, and featured projects

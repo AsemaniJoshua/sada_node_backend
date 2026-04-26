@@ -9,7 +9,7 @@
 
 ## Quick Start
 
-**Total Endpoints:** 78  
+**Total Endpoints:** 81  
 **Authentication:** JWT (Bearer tokens)  
 **Image Storage:** Cloudinary  
 **Database:** MariaDB with Prisma ORM
@@ -43,7 +43,7 @@
 
 ## Public Endpoints
 
-### Authentication (4 endpoints)
+### Authentication (7 endpoints)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -51,6 +51,9 @@
 | POST | `/api/auth/login` | Login user, get tokens |
 | POST | `/api/auth/refresh-token` | Get new access token |
 | POST | `/api/auth/logout` | Logout user |
+| POST | `/api/auth/forgot-password` | Request password reset OTP |
+| POST | `/api/auth/verify-otp` | Verify OTP for password reset |
+| POST | `/api/auth/reset-password` | Reset password using verified OTP |
 
 ### Home Page (1 endpoint)
 
@@ -384,6 +387,79 @@ Content-Type: application/json
 }
 ```
 
+### Forgot Password (Request OTP)
+
+**Request:**
+```bash
+POST /api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "If an account with this email exists, an OTP has been sent to it."
+}
+```
+
+**Note:** OTP is valid for 15 minutes. User will receive a 6-digit code via email.
+
+### Verify OTP
+
+**Request:**
+```bash
+POST /api/auth/verify-otp
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "OTP verified successfully.",
+  "data": {
+    "verificationToken": "uuid-token"
+  }
+}
+```
+
+### Reset Password
+
+**Request:**
+```bash
+POST /api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "verificationToken": "uuid-token",
+  "newPassword": "newPassword123",
+  "confirmPassword": "newPassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Password reset successfully. You can now login with your new password."
+}
+```
+
+**Password Requirements:**
+- Minimum 8 characters
+- Must match confirmation password
+
 ### Create Project
 
 **Request:**
@@ -455,8 +531,9 @@ Content-Type: application/json
 ## Key Features
 
 ✅ **13 Content Modules** with full CRUD  
-✅ **78 Total Endpoints** (public + admin)  
+✅ **81 Total Endpoints** (public + admin)  
 ✅ **JWT Authentication** with access & refresh tokens  
+✅ **OTP-Based Password Recovery** with email delivery  
 ✅ **Role-Based Access Control** (admin/user)  
 ✅ **Image Management** via Cloudinary  
 ✅ **Email Notifications** via Gmail SMTP  
@@ -467,22 +544,23 @@ Content-Type: application/json
 
 ---
 
-## Database Models (14 total)
+## Database Models (15 total)
 
 1. User
 2. RefreshToken
-3. Home
-4. About
-5. Project
-6. BlogPost
-7. Gallery
-8. Contact
-9. Testimonial
-10. FAQ
-11. Journey
-12. Announcement
-13. Leadership
-14. Payment
+3. PasswordReset
+4. Home
+5. About
+6. Project
+7. BlogPost
+8. Gallery
+9. Contact
+10. Testimonial
+11. FAQ
+12. Journey
+13. Announcement
+14. Leadership
+15. Payment
 
 All models use:
 - UUID primary keys

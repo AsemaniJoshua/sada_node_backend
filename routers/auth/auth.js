@@ -5,6 +5,9 @@ import {
     login,
     refreshTokenController,
     logout,
+    forgotPassword,
+    verifyOtp,
+    resetPassword,
 } from '../../controllers/auth/authController.js';
 
 const router = express.Router();
@@ -20,5 +23,14 @@ router.post('/refresh-token', refreshTokenController);
 
 // Logout user
 router.post('/logout', logout);
+
+// Forgot password - Send OTP to email
+router.post('/forgot-password', forgotPassword);
+
+// Verify OTP - Validate OTP and get verification token
+router.post('/verify-otp', verifyOtp);
+
+// Reset password - Update password using verified OTP
+router.post('/reset-password', resetPassword);
 
 export default router;

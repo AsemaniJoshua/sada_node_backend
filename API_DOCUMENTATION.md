@@ -305,6 +305,164 @@ All records include:
 
 ---
 
+## Forgot Password (Request OTP)
+
+**Endpoint:** `POST /api/auth/forgot-password`  
+**Authentication:** None  
+**Description:** Request password reset by sending OTP to user's email
+
+### Request Body
+
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Validation Rules:**
+- `email`: Required, must be valid email format
+
+### OTP Details
+
+- **Format**: 6-digit numeric code
+- **Delivery**: Sent via email with HTML template
+- **Expiry**: 15 minutes from request
+- **Purpose**: Used to verify user identity before password reset
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "If an account with this email exists, an OTP has been sent to it."
+}
+```
+
+**Note:** The message is generic to prevent user enumeration attacks. OTP is always sent if account exists.
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | Email is required |
+| 400 | Invalid email format |
+
+---
+
+## Verify OTP
+
+**Endpoint:** `POST /api/auth/verify-otp`  
+**Authentication:** None  
+**Description:** Verify OTP and receive verification token for password reset
+
+### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+
+**Validation Rules:**
+- `email`: Required, must be valid email format
+- `otp`: Required, must match hashed OTP from database
+- OTP must not be expired (15 minutes max)
+- OTP must exist in database
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "OTP verified successfully.",
+  "data": {
+    "verificationToken": "550e8400-e29b-41d4-a716-446655440000"
+  }
+}
+```
+
+**Verification Token Usage:**
+- Used in subsequent `reset-password` endpoint
+- Single-use token
+- Expires at same time as OTP (15 minutes from initial forgot-password request)
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | Email is required |
+| 400 | Invalid email format |
+| 400 | OTP is required |
+| 400 | No password reset request found. Please request a new OTP. |
+| 400 | OTP has expired. Please request a new one. |
+| 401 | Invalid OTP |
+| 404 | User with this email does not exist |
+
+---
+
+## Reset Password
+
+**Endpoint:** `POST /api/auth/reset-password`  
+**Authentication:** None  
+**Description:** Reset user password using verified OTP
+
+### Request Body
+
+```json
+{
+  "email": "user@example.com",
+  "verificationToken": "550e8400-e29b-41d4-a716-446655440000",
+  "newPassword": "newSecurePassword123",
+  "confirmPassword": "newSecurePassword123"
+}
+```
+
+**Validation Rules:**
+- `email`: Required, must be valid email format
+- `verificationToken`: Required, must be valid token from OTP verification
+- `newPassword`: Required, minimum 8 characters, must match confirmPassword
+- `confirmPassword`: Required, must match newPassword
+- Verification token must belong to the user's email
+- OTP must be marked as verified
+- OTP must not be expired
+
+### Password Requirements
+
+- Minimum 8 characters
+- No maximum length
+- Can contain any characters (letters, numbers, symbols)
+- Hashed with Argon2id before storage
+- Previous password reset token is deleted after successful reset
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "Password reset successfully. You can now login with your new password."
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | Email is required |
+| 400 | Invalid email format |
+| 400 | Verification token is required |
+| 400 | New password and confirmation password are required |
+| 400 | Password must be at least 8 characters long |
+| 400 | Passwords do not match |
+| 400 | No password reset request found. Please request a new OTP. |
+| 400 | Invalid verification token |
+| 400 | OTP has not been verified. Please verify the OTP first. |
+| 400 | OTP has expired. Please request a new one. |
+| 401 | Verification token does not match the user |
+| 404 | User with this email does not exist |
+
+---
+
 # Public Endpoints
 
 ## Home Page
