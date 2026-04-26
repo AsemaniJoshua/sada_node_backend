@@ -1,6 +1,6 @@
 // Admin Leadership routes with CRUD operations
 import express from 'express';
-import { upload } from '../../config/multer.js';
+import upload from '../../config/multer.js';
 import { authenticate } from '../../middlewares/auth/authenticate.js';
 import { authorize } from '../../middlewares/auth/authorize.js';
 import {
