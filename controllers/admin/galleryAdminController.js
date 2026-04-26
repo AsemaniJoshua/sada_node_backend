@@ -185,10 +185,50 @@ const deleteGalleryById = async (req, res, next) => {
     }
 };
 
+// Upload single image as gallery entry
+const uploadGalleryImage = async (req, res, next) => {
+    try {
+        const { title } = req.body;
+        const files = req.files;
+
+        // Validate required fields
+        if (!title || !title.trim()) {
+            return next(new AppError('Title is required and cannot be empty', 400, true));
+        }
+
+        // Validate images are provided
+        if (!files || files.length === 0) {
+            return next(new AppError('At least one image is required', 400, true));
+        }
+
+        // Upload all images to Cloudinary
+        const images = await Promise.all(
+            files.map((file) => uploadImageToCloudinary(file.path, 'sada/gallery'))
+        );
+
+        // Create gallery entry with images
+        const gallery = await prisma.gallery.create({
+            data: {
+                title: title.trim(),
+                images: images,
+            },
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Image uploaded successfully.',
+            data: gallery,
+        });
+    } catch (error) {
+        next(new AppError(error.message, 500, true));
+    }
+};
+
 export {
     createGallery,
     getAllGalleries,
     getGalleryById,
     updateGalleryById,
     deleteGalleryById,
+    uploadGalleryImage,
 };

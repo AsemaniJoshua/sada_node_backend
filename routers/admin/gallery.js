@@ -9,9 +9,13 @@ import {
     getGalleryById,
     updateGalleryById,
     deleteGalleryById,
+    uploadGalleryImage,
 } from '../../controllers/admin/galleryAdminController.js';
 
 const router = express.Router();
+
+// Upload multiple images as gallery entry
+router.post('/upload', authenticate, authorize('admin'), upload.array('images', 10), uploadGalleryImage);
 
 // Create new gallery entry with multiple image uploads
 router.post('/', authenticate, authorize('admin'), upload.array('images', 10), createGallery);

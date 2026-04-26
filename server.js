@@ -27,6 +27,7 @@ import adminJourneyRouter from "./routers/admin/journey.js";
 import adminAnnouncementsRouter from "./routers/admin/announcements.js";
 import adminLeadershipRouter from "./routers/admin/leadership.js";
 import adminPaymentsRouter from "./routers/admin/payments.js";
+import adminStatisticsRouter from "./routers/admin/statistics.js";
 
 
 // Initializing the express application
@@ -76,6 +77,7 @@ app.use('/api/admin/journey', adminJourneyRouter);
 app.use('/api/admin/announcements', adminAnnouncementsRouter);
 app.use('/api/admin/leadership', adminLeadershipRouter);
 app.use('/api/admin/payments', adminPaymentsRouter);
+app.use('/api/admin/statistics', adminStatisticsRouter);
 
 
 // Error handling middleware
