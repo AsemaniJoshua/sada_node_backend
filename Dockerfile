@@ -26,4 +26,4 @@ RUN npx prisma migrate deploy
 EXPOSE 5000
 
 # start the application
-CMD ["npm", "start"]
+CMD ["npx", "tsx", "server.js"]
