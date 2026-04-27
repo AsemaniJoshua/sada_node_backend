@@ -71,13 +71,44 @@ model About {
   updatedAt  DateTime @updatedAt
 }
 
-// Membership model - Singleton page for membership benefits and requirements
+// Membership model - Member registration and management
 model Membership {
-  id           String   @id @default(uuid())
-  benefits     Json // [string]
-  requirements Json // [string]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                    String               @id @default(uuid())
+  firstName             String
+  lastName              String
+  dob                   String               // "1990-05-15" format
+  age                   Int
+  placeOfBirth          String
+  gender                String               // male, female, other
+  hometown              String
+  currentAddress        String
+  ethnicity             String
+  suburb                String
+  occupation            String
+  phone                 String               @unique
+  email                 String               @unique
+  fatherName            String
+  fatherHometown        String
+  fatherContact         String
+  motherName            String
+  motherHometown        String
+  motherContact         String
+  emergencyName         String
+  emergencyRelationship String
+  emergencyOccupation   String
+  emergencyContact      String
+  declaration           Boolean              @default(true)
+  status                MembershipStatus     @default(pending)
+  notes                 String?              @db.LongText // Private notes for admin only
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+}
+
+// Enum for membership status
+enum MembershipStatus {
+  pending
+  approved
+  rejected
 }
 
 // Project model - Showcase projects with multiple images
@@ -191,6 +222,13 @@ enum PaymentStatus {
   pending
   successful
   failed
+}
+
+// Enum for membership status
+enum MembershipStatus {
+  pending
+  approved
+  rejected
 }
 
 // Enum for project status

@@ -1,46 +1,148 @@
-// Admin membership controller - CRUD operations for membership
+// Admin membership controller - CRUD operations and approval/rejection
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
+import nodemailer from 'nodemailer';
+
+// Create nodemailer transporter for membership status emails
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+    },
+});
 
 /**
- * Create new membership record
- * For singleton, typically only 1 record should exist
+ * Create new membership record (manual creation by admin)
  */
 const createMembership = async (req, res, next) => {
     try {
-        const { benefits, requirements } = req.body;
+        const {
+            firstName,
+            lastName,
+            dob,
+            age,
+            placeOfBirth,
+            gender,
+            hometown,
+            currentAddress,
+            ethnicity,
+            suburb,
+            occupation,
+            phone,
+            email,
+            fatherName,
+            fatherHometown,
+            fatherContact,
+            motherName,
+            motherHometown,
+            motherContact,
+            emergencyName,
+            emergencyRelationship,
+            emergencyOccupation,
+            emergencyContact,
+            declaration,
+            notes,
+        } = req.body;
 
         // Validate required fields
-        if (!benefits || !requirements) {
-            throw new AppError('benefits and requirements are required', 400, true);
+        if (
+            !firstName ||
+            !lastName ||
+            !dob ||
+            !age ||
+            !placeOfBirth ||
+            !gender ||
+            !hometown ||
+            !currentAddress ||
+            !ethnicity ||
+            !suburb ||
+            !occupation ||
+            !phone ||
+            !email ||
+            !fatherName ||
+            !fatherHometown ||
+            !fatherContact ||
+            !motherName ||
+            !motherHometown ||
+            !motherContact ||
+            !emergencyName ||
+            !emergencyRelationship ||
+            !emergencyOccupation ||
+            !emergencyContact ||
+            declaration === undefined
+        ) {
+            throw new AppError('All required fields must be provided', 400, true);
         }
 
-        // Validate both are arrays
-        if (!Array.isArray(benefits) || !Array.isArray(requirements)) {
-            throw new AppError('benefits and requirements must be arrays', 400, true);
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            throw new AppError('Invalid email format', 400, true);
+        }
+
+        // Check if email already registered
+        const existingEmailMember = await prisma.membership.findUnique({
+            where: { email },
+        });
+
+        if (existingEmailMember) {
+            throw new AppError('Email already registered', 409, true);
+        }
+
+        // Check if phone already registered
+        const existingPhoneMember = await prisma.membership.findUnique({
+            where: { phone },
+        });
+
+        if (existingPhoneMember) {
+            throw new AppError('Phone number already registered', 409, true);
         }
 
         // Create membership record
         const membership = await prisma.membership.create({
             data: {
-                benefits,
-                requirements,
+                firstName,
+                lastName,
+                dob,
+                age: parseInt(age),
+                placeOfBirth,
+                gender,
+                hometown,
+                currentAddress,
+                ethnicity,
+                suburb,
+                occupation,
+                phone,
+                email,
+                fatherName,
+                fatherHometown,
+                fatherContact,
+                motherName,
+                motherHometown,
+                motherContact,
+                emergencyName,
+                emergencyRelationship,
+                emergencyOccupation,
+                emergencyContact,
+                declaration,
+                notes: notes || null,
+                status: 'pending',
             },
         });
 
         res.status(201).json({
             success: true,
-            message: 'Membership created successfully.',
+            message: 'Membership record created successfully.',
             data: membership,
         });
     } catch (error) {
-        next(new AppError(error.message, 500, true));
+        next(error);
     }
 };
 
 /**
- * Get all membership records
- * For singleton, should return array with 1 record
+ * Get all membership records (admin view - includes private notes and all statuses)
  */
 const getAllMemberships = async (req, res, next) => {
     try {
@@ -58,7 +160,7 @@ const getAllMemberships = async (req, res, next) => {
 };
 
 /**
- * Get membership record by ID
+ * Get membership record by ID (admin view - includes private notes)
  */
 const getMembershipById = async (req, res, next) => {
     try {
@@ -92,7 +194,6 @@ const getMembershipById = async (req, res, next) => {
 const updateMembershipById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { benefits, requirements } = req.body;
 
         // Validate ID
         if (!id) {
@@ -108,19 +209,45 @@ const updateMembershipById = async (req, res, next) => {
             throw new AppError('Membership record not found', 404, true);
         }
 
-        // Validate array fields if provided
-        if (benefits && !Array.isArray(benefits)) {
-            throw new AppError('benefits must be an array', 400, true);
-        }
-
-        if (requirements && !Array.isArray(requirements)) {
-            throw new AppError('requirements must be an array', 400, true);
-        }
-
-        // Build update data (only include provided fields)
+        // Build update data from provided fields
         const updateData = {};
-        if (benefits !== undefined) updateData.benefits = benefits;
-        if (requirements !== undefined) updateData.requirements = requirements;
+        const allowedFields = [
+            'firstName',
+            'lastName',
+            'dob',
+            'age',
+            'placeOfBirth',
+            'gender',
+            'hometown',
+            'currentAddress',
+            'ethnicity',
+            'suburb',
+            'occupation',
+            'phone',
+            'email',
+            'fatherName',
+            'fatherHometown',
+            'fatherContact',
+            'motherName',
+            'motherHometown',
+            'motherContact',
+            'emergencyName',
+            'emergencyRelationship',
+            'emergencyOccupation',
+            'emergencyContact',
+            'declaration',
+            'notes',
+        ];
+
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                if (field === 'age') {
+                    updateData[field] = parseInt(req.body[field]);
+                } else {
+                    updateData[field] = req.body[field];
+                }
+            }
+        }
 
         // Update membership record
         const updatedMembership = await prisma.membership.update({
@@ -130,11 +257,11 @@ const updateMembershipById = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: 'Membership updated successfully.',
+            message: 'Membership record updated successfully.',
             data: updatedMembership,
         });
     } catch (error) {
-        next(new AppError(error.message, 500, true));
+        next(error);
     }
 };
 
@@ -166,10 +293,305 @@ const deleteMembershipById = async (req, res, next) => {
 
         res.status(200).json({
             success: true,
-            message: 'Membership deleted successfully.',
+            message: 'Membership record deleted successfully.',
         });
     } catch (error) {
         next(new AppError(error.message, 500, true));
+    }
+};
+
+/**
+ * Approve membership application
+ * Sends approval email to applicant
+ */
+const approveMembership = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { notes } = req.body;
+
+        // Validate ID
+        if (!id) {
+            throw new AppError('ID is required', 400, true);
+        }
+
+        // Check if membership record exists
+        const existingMembership = await prisma.membership.findUnique({
+            where: { id },
+        });
+
+        if (!existingMembership) {
+            throw new AppError('Membership record not found', 404, true);
+        }
+
+        // Update membership status to approved
+        const approvedMembership = await prisma.membership.update({
+            where: { id },
+            data: {
+                status: 'approved',
+                notes: notes || existingMembership.notes,
+            },
+        });
+
+        // Send approval email
+        const mailOptions = {
+            from: 'SADA <' + process.env.EMAIL_USER + '>',
+            to: existingMembership.email,
+            subject: 'Membership Application Approved - SADA',
+            html: `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Membership Approved</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+                            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                            padding: 20px;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background: #ffffff;
+                            border-radius: 8px;
+                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+                            overflow: hidden;
+                        }
+                        .header {
+                            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                            padding: 40px 20px;
+                            text-align: center;
+                            color: #ffffff;
+                        }
+                        .header h1 {
+                            font-size: 28px;
+                            font-weight: 700;
+                            margin-bottom: 8px;
+                        }
+                        .content {
+                            padding: 40px 30px;
+                        }
+                        .content p {
+                            color: #333;
+                            font-size: 16px;
+                            line-height: 1.6;
+                            margin-bottom: 16px;
+                        }
+                        .success-box {
+                            background: #d1fae5;
+                            border-left: 4px solid #10b981;
+                            padding: 16px;
+                            margin: 24px 0;
+                            border-radius: 4px;
+                            color: #065f46;
+                        }
+                        .footer {
+                            background: #f9fafb;
+                            padding: 20px 30px;
+                            text-align: center;
+                            color: #666;
+                            font-size: 12px;
+                            border-top: 1px solid #e5e7eb;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>✅ Congratulations!</h1>
+                        </div>
+                        <div class="content">
+                            <p>Hello ${existingMembership.firstName} ${existingMembership.lastName},</p>
+                            <p>We are delighted to inform you that your membership application has been <strong>APPROVED</strong>!</p>
+                            
+                            <div class="success-box">
+                                <strong>Welcome to SADA Family!</strong>
+                                <p>You are now an approved member. Thank you for joining our organization.</p>
+                            </div>
+                            
+                            <p>If you have any questions, please feel free to contact us.</p>
+                        </div>
+                        <div class="footer">
+                            <p>&copy; 2026 SADA. All rights reserved.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `,
+        };
+
+        // Send email asynchronously
+        transporter.sendMail(mailOptions, (error) => {
+            if (error) {
+                console.error('Error sending approval email:', error);
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Membership approved and notification email sent.',
+            data: approvedMembership,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Reject membership application
+ * Sends rejection email to applicant
+ */
+const rejectMembership = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { reason, notes } = req.body;
+
+        // Validate ID
+        if (!id) {
+            throw new AppError('ID is required', 400, true);
+        }
+
+        // Validate reason is provided
+        if (!reason || !reason.trim()) {
+            throw new AppError('Rejection reason is required', 400, true);
+        }
+
+        // Check if membership record exists
+        const existingMembership = await prisma.membership.findUnique({
+            where: { id },
+        });
+
+        if (!existingMembership) {
+            throw new AppError('Membership record not found', 404, true);
+        }
+
+        // Update membership status to rejected
+        const rejectedMembership = await prisma.membership.update({
+            where: { id },
+            data: {
+                status: 'rejected',
+                notes: notes || existingMembership.notes,
+            },
+        });
+
+        // Send rejection email
+        const mailOptions = {
+            from: 'SADA <' + process.env.EMAIL_USER + '>',
+            to: existingMembership.email,
+            subject: 'Membership Application Status Update - SADA',
+            html: `
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Membership Application Status</title>
+                    <style>
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        body {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+                            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                            padding: 20px;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 0 auto;
+                            background: #ffffff;
+                            border-radius: 8px;
+                            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+                            overflow: hidden;
+                        }
+                        .header {
+                            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                            padding: 40px 20px;
+                            text-align: center;
+                            color: #ffffff;
+                        }
+                        .header h1 {
+                            font-size: 28px;
+                            font-weight: 700;
+                            margin-bottom: 8px;
+                        }
+                        .content {
+                            padding: 40px 30px;
+                        }
+                        .content p {
+                            color: #333;
+                            font-size: 16px;
+                            line-height: 1.6;
+                            margin-bottom: 16px;
+                        }
+                        .reason-box {
+                            background: #fee2e2;
+                            border-left: 4px solid #ef4444;
+                            padding: 16px;
+                            margin: 24px 0;
+                            border-radius: 4px;
+                            color: #7f1d1d;
+                        }
+                        .reason-box strong {
+                            display: block;
+                            margin-bottom: 8px;
+                        }
+                        .footer {
+                            background: #f9fafb;
+                            padding: 20px 30px;
+                            text-align: center;
+                            color: #666;
+                            font-size: 12px;
+                            border-top: 1px solid #e5e7eb;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>Application Status Update</h1>
+                        </div>
+                        <div class="content">
+                            <p>Hello ${existingMembership.firstName} ${existingMembership.lastName},</p>
+                            <p>Thank you for your interest in joining SADA. We have reviewed your membership application.</p>
+                            
+                            <div class="reason-box">
+                                <strong>Application Status: Rejected</strong>
+                                <p><strong>Reason:</strong> ${reason}</p>
+                            </div>
+                            
+                            <p>If you would like to reapply or have any questions about this decision, please feel free to contact us.</p>
+                        </div>
+                        <div class="footer">
+                            <p>&copy; 2026 SADA. All rights reserved.</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `,
+        };
+
+        // Send email asynchronously
+        transporter.sendMail(mailOptions, (error) => {
+            if (error) {
+                console.error('Error sending rejection email:', error);
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Membership rejected and notification email sent.',
+            data: rejectedMembership,
+        });
+    } catch (error) {
+        next(error);
     }
 };
 
@@ -179,4 +601,6 @@ export {
     getMembershipById,
     updateMembershipById,
     deleteMembershipById,
+    approveMembership,
+    rejectMembership,
 };

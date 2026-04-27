@@ -1716,6 +1716,7 @@ All fields are optional:
 ```json
 {
   "benefits": [
+    
     "Access to resources",
     "Networking opportunities",
     "Training programs",
