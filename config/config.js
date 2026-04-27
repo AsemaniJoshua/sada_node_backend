@@ -4,14 +4,18 @@ import { PrismaClient } from "../generated/prisma/client.js";
 
 const adapter = new PrismaMariaDb({
   host: process.env.DATABASE_HOST,
+  port: parseInt(process.env.DATABASE_PORT || "3306"),
   user: process.env.DATABASE_USER,
   password: process.env.DATABASE_PASSWORD,
   database: process.env.DATABASE_NAME,
-  connectionLimit: 5,
-  connectionTimeoutMillis: 1800000,
-  idleTimeoutMillis: 1800000,
-  statementTimeoutMillis: 1800000,
+  connectionLimit: 20,
+  connectTimeout: 30000,
+  waitForConnectionsMillis: 30000,
 });
-const prisma = new PrismaClient({ adapter });
+
+const prisma = new PrismaClient({
+  adapter,
+  log: ["error", "warn"],
+});
 
 export { prisma };
