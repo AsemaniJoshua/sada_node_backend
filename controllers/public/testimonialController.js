@@ -2,10 +2,13 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 
-// Get all testimonials
+// Get all published testimonials
 const getAllTestimonials = async (req, res, next) => {
     try {
         const testimonials = await prisma.testimonial.findMany({
+            where: {
+                status: 'published',
+            },
             orderBy: {
                 createdAt: 'desc',
             },
@@ -20,7 +23,7 @@ const getAllTestimonials = async (req, res, next) => {
     }
 };
 
-// Get testimonial by ID
+// Get published testimonial by ID
 const getTestimonialById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -30,6 +33,11 @@ const getTestimonialById = async (req, res, next) => {
         });
 
         if (!testimonial) {
+            return next(new AppError('Testimonial not found', 404, true));
+        }
+
+        // Only return if status is published
+        if (testimonial.status !== 'published') {
             return next(new AppError('Testimonial not found', 404, true));
         }
 

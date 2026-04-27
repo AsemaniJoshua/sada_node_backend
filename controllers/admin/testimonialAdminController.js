@@ -6,7 +6,7 @@ import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config
 // Create new testimonial with image upload
 const createTestimonial = async (req, res, next) => {
     try {
-        const { name, role, text } = req.body;
+        const { name, role, text, ratings, status } = req.body;
         const file = req.file;
 
         // Validate required fields
@@ -26,6 +26,21 @@ const createTestimonial = async (req, res, next) => {
             return next(new AppError('Image is required', 400, true));
         }
 
+        // Validate ratings
+        if (ratings === undefined || ratings === null) {
+            return next(new AppError('Ratings is required', 400, true));
+        }
+
+        const ratingsNum = parseInt(ratings);
+        if (isNaN(ratingsNum) || ratingsNum < 0 || ratingsNum > 5) {
+            return next(new AppError('Ratings must be a number between 0 and 5', 400, true));
+        }
+
+        // Validate status if provided
+        if (status && !['published', 'draft'].includes(status)) {
+            return next(new AppError('Status must be either "published" or "draft"', 400, true));
+        }
+
         // Upload image to Cloudinary
         const { url, public_id } = await uploadImageToCloudinary(file.buffer, 'testimonials');
 
@@ -36,6 +51,8 @@ const createTestimonial = async (req, res, next) => {
                 role: role.trim(),
                 text: text.trim(),
                 image: { url, public_id },
+                ratings: ratingsNum,
+                status: status || 'draft',
             },
         });
 
@@ -93,7 +110,7 @@ const getTestimonialById = async (req, res, next) => {
 const updateTestimonialById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { name, role, text } = req.body;
+        const { name, role, text, ratings, status } = req.body;
         const file = req.file;
 
         // Find existing testimonial
@@ -130,6 +147,23 @@ const updateTestimonialById = async (req, res, next) => {
                 return next(new AppError('Testimonial text cannot be empty', 400, true));
             }
             updateData.text = text.trim();
+        }
+
+        // Update ratings if provided
+        if (ratings !== undefined && ratings !== null) {
+            const ratingsNum = parseInt(ratings);
+            if (isNaN(ratingsNum) || ratingsNum < 0 || ratingsNum > 5) {
+                return next(new AppError('Ratings must be a number between 0 and 5', 400, true));
+            }
+            updateData.ratings = ratingsNum;
+        }
+
+        // Update status if provided
+        if (status) {
+            if (!['published', 'draft'].includes(status)) {
+                return next(new AppError('Status must be either "published" or "draft"', 400, true));
+            }
+            updateData.status = status;
         }
 
         // Handle image update

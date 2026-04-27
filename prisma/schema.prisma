@@ -157,13 +157,15 @@ model Contact {
 
 // Testimonial model - Customer/user testimonials with image
 model Testimonial {
-  id        String   @id @default(uuid())
+  id        String               @id @default(uuid())
   name      String
   role      String
-  text      String   @db.LongText
-  image     Json     // { url, public_id }
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  text      String               @db.LongText
+  image     Json                 // { url, public_id }
+  ratings   Int                 // 1-5 rating scale
+  status    TestimonialStatus    @default(draft)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
 }
 
 // FAQ model - Frequently asked questions
@@ -228,6 +230,12 @@ enum PaymentStatus {
 
 // Enum for FAQ status
 enum FAQStatus {
+  published
+  draft
+}
+
+// Enum for testimonial status
+enum TestimonialStatus {
   published
   draft
 }
