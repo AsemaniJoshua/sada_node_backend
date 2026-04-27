@@ -2,10 +2,13 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 
-// Get all FAQs
+// Get all published FAQs
 const getAllFAQs = async (req, res, next) => {
     try {
         const faqs = await prisma.faq.findMany({
+            where: {
+                status: 'published',
+            },
             orderBy: {
                 createdAt: 'desc',
             },
@@ -20,7 +23,7 @@ const getAllFAQs = async (req, res, next) => {
     }
 };
 
-// Get FAQ by ID
+// Get published FAQ by ID
 const getFAQById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -30,6 +33,11 @@ const getFAQById = async (req, res, next) => {
         });
 
         if (!faq) {
+            return next(new AppError('FAQ not found', 404, true));
+        }
+
+        // Only return if status is published
+        if (faq.status !== 'published') {
             return next(new AppError('FAQ not found', 404, true));
         }
 

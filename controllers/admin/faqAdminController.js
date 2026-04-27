@@ -5,7 +5,7 @@ import { prisma } from '../../config/config.js';
 // Create new FAQ
 const createFAQ = async (req, res, next) => {
     try {
-        const { question, answer } = req.body;
+        const { question, answer, category, status } = req.body;
 
         // Validate required fields
         if (!question || !question.trim()) {
@@ -16,11 +16,22 @@ const createFAQ = async (req, res, next) => {
             return next(new AppError('Answer is required and cannot be empty', 400, true));
         }
 
+        if (!category || !category.trim()) {
+            return next(new AppError('Category is required and cannot be empty', 400, true));
+        }
+
+        // Validate status if provided
+        if (status && !['published', 'draft'].includes(status)) {
+            return next(new AppError('Status must be either "published" or "draft"', 400, true));
+        }
+
         // Create FAQ in database
         const faq = await prisma.faq.create({
             data: {
                 question: question.trim(),
                 answer: answer.trim(),
+                category: category.trim(),
+                status: status || 'draft',
             },
         });
 
@@ -78,7 +89,7 @@ const getFAQById = async (req, res, next) => {
 const updateFAQById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { question, answer } = req.body;
+        const { question, answer, category, status } = req.body;
 
         // Find existing FAQ
         const faq = await prisma.faq.findUnique({
@@ -106,6 +117,22 @@ const updateFAQById = async (req, res, next) => {
                 return next(new AppError('Answer cannot be empty', 400, true));
             }
             updateData.answer = answer.trim();
+        }
+
+        // Update category if provided
+        if (category) {
+            if (!category.trim()) {
+                return next(new AppError('Category cannot be empty', 400, true));
+            }
+            updateData.category = category.trim();
+        }
+
+        // Update status if provided
+        if (status) {
+            if (!['published', 'draft'].includes(status)) {
+                return next(new AppError('Status must be either "published" or "draft"', 400, true));
+            }
+            updateData.status = status;
         }
 
         // Update FAQ in database
