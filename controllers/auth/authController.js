@@ -21,11 +21,19 @@ const transporter = nodemailer.createTransport({
  */
 const register = async (req, res, next) => {
     try {
-        const { email, password, name } = req.body;
+        const { email, password, name, role } = req.body;
 
         // Validate input
         if (!email || !password || !name) {
             throw new AppError('Email, password, and name are required', 400, true);
+        }
+
+        // Validate and set role (default to 'user' if not provided)
+        const allowedRoles = ['admin', 'user'];
+        let userRole = role && role.trim() ? role.trim() : 'user';
+
+        if (!allowedRoles.includes(userRole)) {
+            throw new AppError(`Invalid role. Must be one of: ${allowedRoles.join(', ')}`, 400, true);
         }
 
         // Validate email format
@@ -51,13 +59,13 @@ const register = async (req, res, next) => {
         // Hash password using argon2
         const hashedPassword = await hash(password);
 
-        // Create new user with default role "user"
+        // Create new user with specified role (defaults to 'user')
         const user = await prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
                 name,
-                role: 'user',
+                role: userRole,
             },
             select: {
                 id: true,
