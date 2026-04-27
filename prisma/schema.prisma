@@ -67,9 +67,17 @@ model About {
   vision     String   @db.LongText
   coreValues Json // [string]
   history    String   @db.LongText
-  membership Json // { benefits: [string], requirements: [string] }
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+// Membership model - Singleton page for membership benefits and requirements
+model Membership {
+  id           String   @id @default(uuid())
+  benefits     Json // [string]
+  requirements Json // [string]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // Project model - Showcase projects with multiple images

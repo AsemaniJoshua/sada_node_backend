@@ -27,7 +27,7 @@ const createLeadership = async (req, res, next) => {
         }
 
         // Upload image to Cloudinary
-        const imageData = await uploadImageToCloudinary(req.file.path, 'sada/leadership');
+        const imageData = await uploadImageToCloudinary(req.file.buffer, 'sada/leadership');
 
         // Create leadership profile in database
         const leadershipProfile = await prisma.leadership.create({
@@ -139,7 +139,7 @@ const updateLeadershipById = async (req, res, next) => {
             }
 
             // Upload new image to Cloudinary
-            const imageData = await uploadImageToCloudinary(req.file.path, 'sada/leadership');
+            const imageData = await uploadImageToCloudinary(req.file.buffer, 'sada/leadership');
             updateData.image = imageData;
         }
 

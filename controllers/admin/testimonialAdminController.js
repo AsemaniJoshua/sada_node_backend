@@ -2,7 +2,6 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
-import fs from 'fs';
 
 // Create new testimonial with image upload
 const createTestimonial = async (req, res, next) => {
@@ -28,7 +27,7 @@ const createTestimonial = async (req, res, next) => {
         }
 
         // Upload image to Cloudinary
-        const { url, public_id } = await uploadImageToCloudinary(file.path, 'testimonials');
+        const { url, public_id } = await uploadImageToCloudinary(file.buffer, 'testimonials');
 
         // Create testimonial entry in database
         const testimonial = await prisma.testimonial.create({
@@ -103,10 +102,6 @@ const updateTestimonialById = async (req, res, next) => {
         });
 
         if (!testimonial) {
-            // Clean up uploaded file if testimonial not found
-            if (file) {
-                fs.unlinkSync(file.path);
-            }
             return next(new AppError('Testimonial not found', 404, true));
         }
 
@@ -116,7 +111,6 @@ const updateTestimonialById = async (req, res, next) => {
         // Update name if provided
         if (name) {
             if (!name.trim()) {
-                if (file) fs.unlinkSync(file.path);
                 return next(new AppError('Name cannot be empty', 400, true));
             }
             updateData.name = name.trim();
@@ -125,7 +119,6 @@ const updateTestimonialById = async (req, res, next) => {
         // Update role if provided
         if (role) {
             if (!role.trim()) {
-                if (file) fs.unlinkSync(file.path);
                 return next(new AppError('Role cannot be empty', 400, true));
             }
             updateData.role = role.trim();
@@ -134,7 +127,6 @@ const updateTestimonialById = async (req, res, next) => {
         // Update text if provided
         if (text) {
             if (!text.trim()) {
-                if (file) fs.unlinkSync(file.path);
                 return next(new AppError('Testimonial text cannot be empty', 400, true));
             }
             updateData.text = text.trim();
@@ -143,7 +135,7 @@ const updateTestimonialById = async (req, res, next) => {
         // Handle image update
         if (file) {
             // Upload new image to Cloudinary
-            const { url, public_id } = await uploadImageToCloudinary(file.path, 'testimonials');
+            const { url, public_id } = await uploadImageToCloudinary(file.buffer, 'testimonials');
             updateData.image = { url, public_id };
 
             // Delete old image from Cloudinary if it exists

@@ -33,7 +33,7 @@ const createProject = async (req, res, next) => {
         const uploadedImages = [];
         for (const file of files) {
             try {
-                const cloudinaryImage = await uploadImageToCloudinary(file.path, 'projects');
+                const cloudinaryImage = await uploadImageToCloudinary(file.buffer, 'projects');
                 uploadedImages.push(cloudinaryImage);
             } catch (uploadError) {
                 // Cleanup already uploaded images if new upload fails
@@ -156,7 +156,7 @@ const updateProjectById = async (req, res, next) => {
             uploadedImages = [];
             for (const file of files) {
                 try {
-                    const cloudinaryImage = await uploadImageToCloudinary(file.path, 'projects');
+                    const cloudinaryImage = await uploadImageToCloudinary(file.buffer, 'projects');
                     uploadedImages.push(cloudinaryImage);
                 } catch (uploadError) {
                     // Cleanup already uploaded images if new upload fails

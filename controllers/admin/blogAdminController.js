@@ -36,7 +36,7 @@ const createBlogPost = async (req, res, next) => {
         if (files && files.length > 0) {
             for (const file of files) {
                 try {
-                    const cloudinaryImage = await uploadImageToCloudinary(file.path, 'blog');
+                    const cloudinaryImage = await uploadImageToCloudinary(file.buffer, 'blog');
                     uploadedImages.push(cloudinaryImage);
                 } catch (uploadError) {
                     // Cleanup already uploaded images if new upload fails
@@ -165,7 +165,7 @@ const updateBlogPostById = async (req, res, next) => {
             uploadedImages = [];
             for (const file of files) {
                 try {
-                    const cloudinaryImage = await uploadImageToCloudinary(file.path, 'blog');
+                    const cloudinaryImage = await uploadImageToCloudinary(file.buffer, 'blog');
                     uploadedImages.push(cloudinaryImage);
                 } catch (uploadError) {
                     // Cleanup already uploaded images if new upload fails

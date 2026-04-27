@@ -3,13 +3,13 @@
 **API Version:** 1.0.0  
 **Base URL:** `http://localhost:5000/api`  
 **Environment:** Node.js with Express, Prisma ORM, MariaDB  
-**Last Updated:** April 26, 2026
+**Last Updated:** April 27, 2026
 
 ---
 
 ## Quick Start
 
-**Total Endpoints:** 81  
+**Total Endpoints:** 88  
 **Authentication:** JWT (Bearer tokens)  
 **Image Storage:** Cloudinary  
 **Database:** MariaDB with Prisma ORM
@@ -136,6 +136,13 @@
 | POST | `/api/payments` | Initiate payment (Paystack) |
 | GET | `/api/payments/verify/:reference` | Verify payment status |
 
+### Membership (2 endpoints)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/membership` | Get all membership records |
+| GET | `/api/membership/:id` | Get membership record by ID |
+
 ---
 
 ## Admin Endpoints
@@ -257,6 +264,16 @@ All admin endpoints require JWT authentication and `admin` role.
 |--------|----------|-------------|
 | GET | `/api/admin/payments` | Get all payments |
 | GET | `/api/admin/payments/:id` | Get payment by ID |
+
+### Membership (5 endpoints)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/membership` | Create membership |
+| GET | `/api/admin/membership` | Get all memberships |
+| GET | `/api/admin/membership/:id` | Get membership by ID |
+| PATCH | `/api/admin/membership/:id` | Update membership |
+| DELETE | `/api/admin/membership/:id` | Delete membership |
 
 ### Statistics (1 endpoint)
 

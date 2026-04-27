@@ -8,12 +8,12 @@ import { prisma } from '../../config/config.js';
  */
 const createAbout = async (req, res, next) => {
     try {
-        const { mission, vision, coreValues, history, membership } = req.body;
+        const { mission, vision, coreValues, history } = req.body;
 
         // Validate required fields
-        if (!mission || !vision || !coreValues || !history || !membership) {
+        if (!mission || !vision || !coreValues || !history) {
             throw new AppError(
-                'mission, vision, coreValues, history, and membership are required',
+                'mission, vision, coreValues, and history are required',
                 400,
                 true
             );
@@ -24,22 +24,6 @@ const createAbout = async (req, res, next) => {
             throw new AppError('coreValues must be an array', 400, true);
         }
 
-        // Validate membership object
-        if (!membership.benefits || !membership.requirements) {
-            throw new AppError(
-                'membership must contain benefits and requirements arrays',
-                400,
-                true
-            );
-        }
-
-        if (
-            !Array.isArray(membership.benefits) ||
-            !Array.isArray(membership.requirements)
-        ) {
-            throw new AppError('membership.benefits and membership.requirements must be arrays', 400, true);
-        }
-
         // Create about record
         const about = await prisma.about.create({
             data: {
@@ -47,7 +31,6 @@ const createAbout = async (req, res, next) => {
                 vision,
                 coreValues,
                 history,
-                membership,
             },
         });
 
@@ -115,7 +98,7 @@ const getAboutById = async (req, res, next) => {
 const updateAboutById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { mission, vision, coreValues, history, membership } = req.body;
+        const { mission, vision, coreValues, history } = req.body;
 
         // Validate ID
         if (!id) {
@@ -136,23 +119,12 @@ const updateAboutById = async (req, res, next) => {
             throw new AppError('coreValues must be an array', 400, true);
         }
 
-        if (membership) {
-            if (!Array.isArray(membership.benefits) || !Array.isArray(membership.requirements)) {
-                throw new AppError(
-                    'membership.benefits and membership.requirements must be arrays',
-                    400,
-                    true
-                );
-            }
-        }
-
         // Build update data (only include provided fields)
         const updateData = {};
         if (mission !== undefined) updateData.mission = mission;
         if (vision !== undefined) updateData.vision = vision;
         if (coreValues !== undefined) updateData.coreValues = coreValues;
         if (history !== undefined) updateData.history = history;
-        if (membership !== undefined) updateData.membership = membership;
 
         // Update about record
         const updatedAbout = await prisma.about.update({

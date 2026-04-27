@@ -2,7 +2,6 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
-import fs from 'fs';
 
 // Create new gallery entry with multiple image uploads
 const createGallery = async (req, res, next) => {
@@ -21,7 +20,7 @@ const createGallery = async (req, res, next) => {
 
         // Upload all images to Cloudinary
         const images = await Promise.all(
-            files.map((file) => uploadImageToCloudinary(file.path, 'gallery'))
+            files.map((file) => uploadImageToCloudinary(file.buffer, 'gallery'))
         );
 
         // Create gallery entry in database
@@ -95,10 +94,7 @@ const updateGalleryById = async (req, res, next) => {
         });
 
         if (!gallery) {
-            // Clean up uploaded files if gallery not found
-            if (files && files.length > 0) {
-                files.forEach((file) => fs.unlinkSync(file.path));
-            }
+            // No need to clean up files with memory storage
             return next(new AppError('Gallery not found', 404, true));
         }
 
@@ -108,9 +104,6 @@ const updateGalleryById = async (req, res, next) => {
         // Update title if provided
         if (title) {
             if (!title.trim()) {
-                if (files && files.length > 0) {
-                    files.forEach((file) => fs.unlinkSync(file.path));
-                }
                 return next(new AppError('Title cannot be empty', 400, true));
             }
             updateData.title = title.trim();
@@ -120,7 +113,7 @@ const updateGalleryById = async (req, res, next) => {
         if (files && files.length > 0) {
             // Upload new images to Cloudinary
             const newImages = await Promise.all(
-                files.map((file) => uploadImageToCloudinary(file.path, 'gallery'))
+                files.map((file) => uploadImageToCloudinary(file.buffer, 'gallery'))
             );
             updateData.images = newImages;
 
@@ -203,7 +196,7 @@ const uploadGalleryImage = async (req, res, next) => {
 
         // Upload all images to Cloudinary
         const images = await Promise.all(
-            files.map((file) => uploadImageToCloudinary(file.path, 'sada/gallery'))
+            files.map((file) => uploadImageToCloudinary(file.buffer, 'sada/gallery'))
         );
 
         // Create gallery entry with images

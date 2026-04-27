@@ -1,41 +1,66 @@
 // Cloudinary upload and delete utilities
 import cloudinary from './cloudinary.js';
 import fs from 'fs';
+import { Readable } from 'stream';
 import { AppError } from '../utils/error/AppError.js';
 
 /**
- * Upload image to Cloudinary from file path
- * @param {String} filePath - Local file path from multer
+ * Upload image to Cloudinary from buffer or file path
+ * @param {Buffer|String} fileData - Buffer from multer memory storage or file path
  * @param {String} folder - Cloudinary folder name
  * @returns {Object} { url, public_id }
  */
-const uploadImageToCloudinary = async (filePath, folder) => {
+const uploadImageToCloudinary = async (fileData, folder) => {
     try {
-        if (!filePath || !fs.existsSync(filePath)) {
-            throw new AppError('File not found', 400, true);
+        let uploadStream;
+
+        // Handle both buffer (memory storage) and file path (disk storage)
+        if (Buffer.isBuffer(fileData)) {
+            // If it's a buffer, convert it to a readable stream
+            uploadStream = Readable.from(fileData);
+        } else if (typeof fileData === 'string') {
+            // If it's a file path, check if file exists
+            if (!fs.existsSync(fileData)) {
+                throw new AppError('File not found', 400, true);
+            }
+            uploadStream = fs.createReadStream(fileData);
+        } else {
+            throw new AppError('Invalid file data', 400, true);
         }
 
         // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload(filePath, {
-            folder: `sada/${folder}`,
-            resource_type: 'auto',
-            quality: 'auto',
+        return new Promise((resolve, reject) => {
+            const uploadPromise = cloudinary.uploader.upload_stream(
+                {
+                    folder: `sada/${folder}`,
+                    resource_type: 'auto',
+                    quality: 'auto',
+                },
+                (error, result) => {
+                    if (error) {
+                        reject(new AppError(`Cloudinary upload failed: ${error.message}`, 500, true));
+                    } else {
+                        resolve({
+                            url: result.secure_url,
+                            public_id: result.public_id,
+                        });
+                    }
+                }
+            );
+
+            uploadStream.pipe(uploadPromise);
         });
-
-        // Delete temporary file after successful upload
-        fs.unlinkSync(filePath);
-
-        return {
-            url: result.secure_url,
-            public_id: result.public_id,
-        };
     } catch (error) {
-        // Delete temporary file if upload fails
-        if (filePath && fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
+        // Delete temporary file if it was a file path
+        if (typeof fileData === 'string' && fs.existsSync(fileData)) {
+            fs.unlinkSync(fileData);
         }
 
-        throw new AppError(`Cloudinary upload failed: ${error.message}`, 500, true);
+        throw new AppError(
+            `Upload failed: ${error.message}`,
+            500,
+            true
+        );
     }
 };
 

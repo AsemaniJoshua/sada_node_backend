@@ -147,7 +147,7 @@ All records include:
   "email": "user@example.com",
   "password": "12345678",
   "name": "John Doe",
-  "role": "admin"
+  "role": "user"
 }
 ```
 
@@ -155,6 +155,7 @@ All records include:
 - `email`: Required, valid email format
 - `password`: Required, minimum 8 characters
 - `name`: Required, non-empty string
+- `role`: Optional, must be one of `admin` or `user` (defaults to `user` if not provided)
 
 ### Success Response (201)
 
@@ -179,6 +180,7 @@ All records include:
 | 400 | Email, password, and name are required |
 | 400 | Invalid email format |
 | 400 | Password must be at least 8 characters long |
+| 400 | Invalid role. Must be one of: admin, user |
 | 409 | User with this email already exists |
 
 ---
@@ -548,18 +550,6 @@ All records include:
       "Impact"
     ],
     "history": "Founded in 2020, SADA has...",
-    "membership": {
-      "benefits": [
-        "Access to resources",
-        "Networking opportunities",
-        "Training programs"
-      ],
-      "requirements": [
-        "Age 18+",
-        "Commitment to values",
-        "Monthly contribution"
-      ]
-    },
     "createdAt": "2026-04-26T10:00:00Z",
     "updatedAt": "2026-04-26T10:30:00Z"
   }
@@ -1534,19 +1524,7 @@ All fields are optional:
     "Inclusion",
     "Impact"
   ],
-  "history": "Founded in 2020, SADA has been dedicated to supporting African development...",
-  "membership": {
-    "benefits": [
-      "Access to resources",
-      "Networking opportunities",
-      "Training programs"
-    ],
-    "requirements": [
-      "Age 18+",
-      "Commitment to organizational values",
-      "Monthly financial contribution"
-    ]
-  }
+  "history": "Founded in 2020, SADA has been dedicated to supporting African development..."
 }
 ```
 
@@ -1555,7 +1533,6 @@ All fields are optional:
 - `vision`: Required, string
 - `coreValues`: Required, array of strings
 - `history`: Required, string
-- `membership`: Required object with `benefits` and `requirements` arrays
 
 ### Success Response (201)
 
@@ -1580,10 +1557,8 @@ All fields are optional:
 
 | Status | Message |
 |--------|---------|
-| 400 | mission, vision, coreValues, history, and membership are required |
+| 400 | mission, vision, coreValues, and history are required |
 | 400 | coreValues must be an array |
-| 400 | membership must contain benefits and requirements arrays |
-| 400 | membership.benefits and membership.requirements must be arrays |
 
 ---
 
@@ -1660,6 +1635,228 @@ All fields are optional:
   "message": "About page deleted successfully."
 }
 ```
+
+---
+
+## Membership
+
+### Get All Memberships
+
+**Endpoint:** `GET /api/membership`  
+**Authentication:** None  
+**Description:** Fetch all membership records (for singleton, returns 1 record)
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440050",
+      "benefits": [
+        "Access to resources",
+        "Networking opportunities",
+        "Training programs"
+      ],
+      "requirements": [
+        "Age 18+",
+        "Commitment to values",
+        "Monthly contribution"
+      ],
+      "createdAt": "2026-04-26T10:00:00Z",
+      "updatedAt": "2026-04-26T10:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Get Membership by ID
+
+**Endpoint:** `GET /api/membership/:id`  
+**Authentication:** None  
+**Description:** Fetch a specific membership record
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440050",
+    "benefits": [ ... ],
+    "requirements": [ ... ],
+    "createdAt": "2026-04-26T10:00:00Z",
+    "updatedAt": "2026-04-26T10:30:00Z"
+  }
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | ID is required |
+| 404 | Membership record not found |
+
+---
+
+## Membership (Admin)
+
+### Create Membership Record
+
+**Endpoint:** `POST /api/admin/membership`  
+**Authentication:** Required (admin)  
+**Description:** Create membership data
+
+### Request Body
+
+```json
+{
+  "benefits": [
+    "Access to resources",
+    "Networking opportunities",
+    "Training programs",
+    "Mentorship"
+  ],
+  "requirements": [
+    "Age 18+",
+    "Commitment to organizational values",
+    "Monthly financial contribution",
+    "Active participation"
+  ]
+}
+```
+
+**Validation Rules:**
+- `benefits`: Required, array of strings
+- `requirements`: Required, array of strings
+
+### Success Response (201)
+
+```json
+{
+  "success": true,
+  "message": "Membership created successfully.",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440050",
+    "benefits": [ ... ],
+    "requirements": [ ... ],
+    "createdAt": "2026-04-26T10:00:00Z",
+    "updatedAt": "2026-04-26T10:00:00Z"
+  }
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | benefits and requirements are required |
+| 400 | benefits and requirements must be arrays |
+
+---
+
+### Get All Membership Records (Admin)
+
+**Endpoint:** `GET /api/admin/membership`  
+**Authentication:** Required (admin)  
+**Description:** Fetch all membership records
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": [ { ... } ]
+}
+```
+
+---
+
+### Get Membership Record by ID (Admin)
+
+**Endpoint:** `GET /api/admin/membership/:id`  
+**Authentication:** Required (admin)  
+**Description:** Fetch a specific membership record
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": { ... }
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | ID is required |
+| 404 | Membership record not found |
+
+---
+
+### Update Membership Record
+
+**Endpoint:** `PATCH /api/admin/membership/:id`  
+**Authentication:** Required (admin)  
+**Description:** Update membership record (partial update)
+
+### Request Body (All fields optional)
+
+```json
+{
+  "benefits": [ ... ],
+  "requirements": [ ... ]
+}
+```
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "Membership updated successfully.",
+  "data": { ... }
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | ID is required |
+| 400 | benefits must be an array |
+| 400 | requirements must be an array |
+| 404 | Membership record not found |
+
+---
+
+### Delete Membership Record
+
+**Endpoint:** `DELETE /api/admin/membership/:id`  
+**Authentication:** Required (admin)  
+**Description:** Delete membership record
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "Membership deleted successfully."
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 400 | ID is required |
+| 404 | Membership record not found |
 
 ---
 
