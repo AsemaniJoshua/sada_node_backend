@@ -146,7 +146,8 @@ All records include:
 {
   "email": "user@example.com",
   "password": "12345678",
-  "name": "John Doe"
+  "name": "John Doe",
+  "role": "admin"
 }
 ```
 
