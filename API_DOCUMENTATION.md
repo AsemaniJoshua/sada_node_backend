@@ -145,7 +145,7 @@ All records include:
 ```json
 {
   "email": "user@example.com",
-  "password": "securePassword123",
+  "password": "12345678",
   "name": "John Doe"
 }
 ```
