@@ -8,9 +8,9 @@ const router = express.Router();
 router.post('/', registerMember);
 
 // Get all approved members
-// router.get('/', getAllMemberships);
+router.get('/', getAllMemberships);
 
 // Get approved member by ID
-// router.get('/:id', getMembershipById);
+router.get('/:id', getMembershipById);
 
 export default router;
