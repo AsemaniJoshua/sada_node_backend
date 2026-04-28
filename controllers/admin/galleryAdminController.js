@@ -3,31 +3,55 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 
-// Create new gallery entry with multiple image uploads
+// Create new gallery entry with primary image and related images
 const createGallery = async (req, res, next) => {
     try {
-        const { title } = req.body;
-        const files = req.files;
+        const { title, description, event_date, category } = req.body;
+        const primaryImageFile = req.files?.primary_image?.[0];
+        const relatedImagesFiles = req.files?.images || [];
 
         // Validate required fields
         if (!title || !title.trim()) {
             return next(new AppError('Title is required and cannot be empty', 400, true));
         }
 
-        if (!files || files.length === 0) {
-            return next(new AppError('At least one image is required', 400, true));
+        if (!description || !description.trim()) {
+            return next(new AppError('Description is required and cannot be empty', 400, true));
         }
 
-        // Upload all images to Cloudinary
-        const images = await Promise.all(
-            files.map((file) => uploadImageToCloudinary(file.buffer, 'gallery'))
+        if (!event_date) {
+            return next(new AppError('Event date is required', 400, true));
+        }
+
+        if (!category || !category.trim()) {
+            return next(new AppError('Category is required and cannot be empty', 400, true));
+        }
+
+        if (!primaryImageFile) {
+            return next(new AppError('Primary image is required', 400, true));
+        }
+
+        if (!relatedImagesFiles || relatedImagesFiles.length === 0) {
+            return next(new AppError('At least one related image is required', 400, true));
+        }
+
+        // Upload primary image to Cloudinary
+        const primaryImage = await uploadImageToCloudinary(primaryImageFile.buffer, 'gallery/primary');
+
+        // Upload all related images to Cloudinary
+        const relatedImages = await Promise.all(
+            relatedImagesFiles.map((file) => uploadImageToCloudinary(file.buffer, 'gallery/related'))
         );
 
         // Create gallery entry in database
         const gallery = await prisma.gallery.create({
             data: {
                 title: title.trim(),
-                images: images,
+                description: description.trim(),
+                primary_image: primaryImage,
+                event_date: new Date(event_date),
+                category: category.trim(),
+                images: relatedImages,
             },
         });
 
@@ -85,8 +109,9 @@ const getGalleryById = async (req, res, next) => {
 const updateGalleryById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title } = req.body;
-        const files = req.files;
+        const { title, description, event_date, category } = req.body;
+        const primaryImageFile = req.files?.primary_image?.[0];
+        const relatedImagesFiles = req.files?.images || [];
 
         // Find existing gallery
         const gallery = await prisma.gallery.findUnique({
@@ -94,7 +119,6 @@ const updateGalleryById = async (req, res, next) => {
         });
 
         if (!gallery) {
-            // No need to clean up files with memory storage
             return next(new AppError('Gallery not found', 404, true));
         }
 
@@ -109,15 +133,47 @@ const updateGalleryById = async (req, res, next) => {
             updateData.title = title.trim();
         }
 
-        // Handle image update
-        if (files && files.length > 0) {
-            // Upload new images to Cloudinary
-            const newImages = await Promise.all(
-                files.map((file) => uploadImageToCloudinary(file.buffer, 'gallery'))
-            );
-            updateData.images = newImages;
+        // Update description if provided
+        if (description) {
+            if (!description.trim()) {
+                return next(new AppError('Description cannot be empty', 400, true));
+            }
+            updateData.description = description.trim();
+        }
 
-            // Delete old images from Cloudinary if they exist
+        // Update event_date if provided
+        if (event_date) {
+            updateData.event_date = new Date(event_date);
+        }
+
+        // Update category if provided
+        if (category) {
+            if (!category.trim()) {
+                return next(new AppError('Category cannot be empty', 400, true));
+            }
+            updateData.category = category.trim();
+        }
+
+        // Handle primary image update
+        if (primaryImageFile) {
+            const newPrimaryImage = await uploadImageToCloudinary(primaryImageFile.buffer, 'gallery/primary');
+            updateData.primary_image = newPrimaryImage;
+
+            // Delete old primary image from Cloudinary if it exists
+            if (gallery.primary_image?.public_id) {
+                const { deleteImageFromCloudinary } = await import('../../config/cloudinaryUpload.js');
+                await deleteImageFromCloudinary(gallery.primary_image.public_id);
+            }
+        }
+
+        // Handle related images update
+        if (relatedImagesFiles && relatedImagesFiles.length > 0) {
+            const newRelatedImages = await Promise.all(
+                relatedImagesFiles.map((file) => uploadImageToCloudinary(file.buffer, 'gallery/related'))
+            );
+            updateData.images = newRelatedImages;
+
+            // Delete old related images from Cloudinary if they exist
             if (gallery.images && Array.isArray(gallery.images) && gallery.images.length > 0) {
                 const oldPublicIds = gallery.images.map((img) => img.public_id);
                 if (oldPublicIds.length > 0) {
@@ -146,6 +202,7 @@ const updateGalleryById = async (req, res, next) => {
 const deleteGalleryById = async (req, res, next) => {
     try {
         const { id } = req.params;
+        const { deleteImageFromCloudinary } = await import('../../config/cloudinaryUpload.js');
 
         // Find gallery
         const gallery = await prisma.gallery.findUnique({
@@ -156,7 +213,12 @@ const deleteGalleryById = async (req, res, next) => {
             return next(new AppError('Gallery not found', 404, true));
         }
 
-        // Delete images from Cloudinary if exist
+        // Delete primary image from Cloudinary if exists
+        if (gallery.primary_image?.public_id) {
+            await deleteImageFromCloudinary(gallery.primary_image.public_id);
+        }
+
+        // Delete related images from Cloudinary if exist
         if (gallery.images && Array.isArray(gallery.images) && gallery.images.length > 0) {
             const publicIds = gallery.images.map((img) => img.public_id);
             if (publicIds.length > 0) {
@@ -178,38 +240,61 @@ const deleteGalleryById = async (req, res, next) => {
     }
 };
 
-// Upload single image as gallery entry
+// Upload gallery entry with images
 const uploadGalleryImage = async (req, res, next) => {
     try {
-        const { title } = req.body;
-        const files = req.files;
+        const { title, description, event_date, category } = req.body;
+        const primaryImageFile = req.files?.primary_image?.[0];
+        const relatedImagesFiles = req.files?.images || [];
 
         // Validate required fields
         if (!title || !title.trim()) {
             return next(new AppError('Title is required and cannot be empty', 400, true));
         }
 
-        // Validate images are provided
-        if (!files || files.length === 0) {
-            return next(new AppError('At least one image is required', 400, true));
+        if (!description || !description.trim()) {
+            return next(new AppError('Description is required and cannot be empty', 400, true));
         }
 
-        // Upload all images to Cloudinary
-        const images = await Promise.all(
-            files.map((file) => uploadImageToCloudinary(file.buffer, 'sada/gallery'))
+        if (!event_date) {
+            return next(new AppError('Event date is required', 400, true));
+        }
+
+        if (!category || !category.trim()) {
+            return next(new AppError('Category is required and cannot be empty', 400, true));
+        }
+
+        if (!primaryImageFile) {
+            return next(new AppError('Primary image is required', 400, true));
+        }
+
+        if (!relatedImagesFiles || relatedImagesFiles.length === 0) {
+            return next(new AppError('At least one related image is required', 400, true));
+        }
+
+        // Upload primary image to Cloudinary
+        const primaryImage = await uploadImageToCloudinary(primaryImageFile.buffer, 'gallery/primary');
+
+        // Upload all related images to Cloudinary
+        const relatedImages = await Promise.all(
+            relatedImagesFiles.map((file) => uploadImageToCloudinary(file.buffer, 'gallery/related'))
         );
 
         // Create gallery entry with images
         const gallery = await prisma.gallery.create({
             data: {
                 title: title.trim(),
-                images: images,
+                description: description.trim(),
+                primary_image: primaryImage,
+                event_date: new Date(event_date),
+                category: category.trim(),
+                images: relatedImages,
             },
         });
 
         res.status(201).json({
             success: true,
-            message: 'Image uploaded successfully.',
+            message: 'Gallery entry created successfully.',
             data: gallery,
         });
     } catch (error) {

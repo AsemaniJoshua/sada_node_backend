@@ -5,7 +5,7 @@ import { prisma } from '../../config/config.js';
 // Create new announcement
 const createAnnouncement = async (req, res, next) => {
     try {
-        const { title, content, date } = req.body;
+        const { title, content, priority, status, start_date, expiry_date } = req.body;
 
         // Validate required fields
         if (!title || !title.trim()) {
@@ -16,18 +16,34 @@ const createAnnouncement = async (req, res, next) => {
             return next(new AppError('Content is required and cannot be empty', 400, true));
         }
 
-        // Validate and parse date if provided
-        let announcementDate = new Date();
-        if (date) {
-            const parsedDate = new Date(date);
-            if (isNaN(parsedDate.getTime())) {
-                return next(new AppError('Invalid date format', 400, true));
-            }
-            // Validate that date is in the future
-            if (parsedDate <= new Date()) {
-                return next(new AppError('Announcement date must be in the future', 400, true));
-            }
-            announcementDate = parsedDate;
+        if (!start_date) {
+            return next(new AppError('Start date is required', 400, true));
+        }
+
+        if (!expiry_date) {
+            return next(new AppError('Expiry date is required', 400, true));
+        }
+
+        // Validate dates
+        const startDate = new Date(start_date);
+        const expiryDate = new Date(expiry_date);
+
+        if (isNaN(startDate.getTime()) || isNaN(expiryDate.getTime())) {
+            return next(new AppError('Invalid date format', 400, true));
+        }
+
+        if (expiryDate <= startDate) {
+            return next(new AppError('Expiry date must be after start date', 400, true));
+        }
+
+        // Validate priority if provided
+        if (priority && !['low', 'medium', 'high'].includes(priority)) {
+            return next(new AppError('Priority must be "low", "medium", or "high"', 400, true));
+        }
+
+        // Validate status if provided
+        if (status && !['draft', 'published'].includes(status)) {
+            return next(new AppError('Status must be "draft" or "published"', 400, true));
         }
 
         // Create announcement in database
@@ -35,7 +51,10 @@ const createAnnouncement = async (req, res, next) => {
             data: {
                 title: title.trim(),
                 content: content.trim(),
-                date: announcementDate,
+                priority: priority || 'low',
+                status: status || 'draft',
+                start_date: startDate,
+                expiry_date: expiryDate,
             },
         });
 
@@ -49,12 +68,51 @@ const createAnnouncement = async (req, res, next) => {
     }
 };
 
-// Get all announcements (admin view)
+// Get all announcements (admin view) with optional filters
 const getAllAnnouncements = async (req, res, next) => {
     try {
+        const { priority, status, start_date_from, start_date_to } = req.query;
+
+        // Build filter conditions
+        const where = {};
+
+        if (priority) {
+            if (!['low', 'medium', 'high'].includes(priority)) {
+                return next(new AppError('Priority must be "low", "medium", or "high"', 400, true));
+            }
+            where.priority = priority;
+        }
+
+        if (status) {
+            if (!['draft', 'published'].includes(status)) {
+                return next(new AppError('Status must be "draft" or "published"', 400, true));
+            }
+            where.status = status;
+        }
+
+        // Filter by date range if provided
+        if (start_date_from || start_date_to) {
+            where.start_date = {};
+            if (start_date_from) {
+                const fromDate = new Date(start_date_from);
+                if (isNaN(fromDate.getTime())) {
+                    return next(new AppError('Invalid start_date_from format', 400, true));
+                }
+                where.start_date.gte = fromDate;
+            }
+            if (start_date_to) {
+                const toDate = new Date(start_date_to);
+                if (isNaN(toDate.getTime())) {
+                    return next(new AppError('Invalid start_date_to format', 400, true));
+                }
+                where.start_date.lte = toDate;
+            }
+        }
+
         const announcements = await prisma.announcement.findMany({
+            where,
             orderBy: {
-                date: 'desc',
+                start_date: 'desc',
             },
         });
 
@@ -93,7 +151,7 @@ const getAnnouncementById = async (req, res, next) => {
 const updateAnnouncementById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, content } = req.body;
+        const { title, content, priority, status, start_date, expiry_date } = req.body;
 
         // Find existing announcement
         const announcement = await prisma.announcement.findUnique({
@@ -123,13 +181,45 @@ const updateAnnouncementById = async (req, res, next) => {
             updateData.content = content.trim();
         }
 
-        // Update date if provided
-        if (date) {
-            const parsedDate = new Date(date);
-            if (isNaN(parsedDate.getTime())) {
-                return next(new AppError('Invalid date format', 400, true));
+        // Update priority if provided
+        if (priority) {
+            if (!['low', 'medium', 'high'].includes(priority)) {
+                return next(new AppError('Priority must be "low", "medium", or "high"', 400, true));
             }
-            updateData.date = parsedDate;
+            updateData.priority = priority;
+        }
+
+        // Update status if provided
+        if (status) {
+            if (!['draft', 'published'].includes(status)) {
+                return next(new AppError('Status must be "draft" or "published"', 400, true));
+            }
+            updateData.status = status;
+        }
+
+        // Update start_date if provided
+        if (start_date) {
+            const startDate = new Date(start_date);
+            if (isNaN(startDate.getTime())) {
+                return next(new AppError('Invalid start_date format', 400, true));
+            }
+            updateData.start_date = startDate;
+        }
+
+        // Update expiry_date if provided
+        if (expiry_date) {
+            const expiryDate = new Date(expiry_date);
+            if (isNaN(expiryDate.getTime())) {
+                return next(new AppError('Invalid expiry_date format', 400, true));
+            }
+            updateData.expiry_date = expiryDate;
+        }
+
+        // Validate that expiry_date is after start_date
+        const finalStartDate = updateData.start_date || announcement.start_date;
+        const finalExpiryDate = updateData.expiry_date || announcement.expiry_date;
+        if (finalExpiryDate <= finalStartDate) {
+            return next(new AppError('Expiry date must be after start date', 400, true));
         }
 
         // Update announcement in database

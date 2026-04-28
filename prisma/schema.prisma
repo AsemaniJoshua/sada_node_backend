@@ -148,11 +148,15 @@ model BlogPost {
 
 // Gallery model - Photo gallery with multiple images per entry
 model Gallery {
-  id        String   @id @default(uuid())
-  title     String
-  images    Json     // [{ url, public_id }]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String    @id @default(uuid())
+  title           String
+  description     String    @db.LongText
+  primary_image   Json      // { url, public_id }
+  event_date      DateTime
+  category        String
+  images          Json      // [{ url, public_id }] - related photos
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 // Contact model - Form submissions from website visitors (append-only)
@@ -205,12 +209,15 @@ model Journey {
 
 // Announcement model - News feed/announcements
 model Announcement {
-  id        String   @id @default(uuid())
-  title     String
-  content   String   @db.LongText
-  date      DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String                    @id @default(uuid())
+  title        String
+  content      String                    @db.LongText
+  priority     AnnouncementPriority      @default(low)
+  status       AnnouncementStatus        @default(draft)
+  start_date   DateTime
+  expiry_date  DateTime
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
 }
 
 model Leadership {
@@ -274,6 +281,19 @@ enum HeroStatus {
 
 // Enum for leadership status
 enum LeadershipStatus {
+  published
+  draft
+}
+
+// Enum for announcement priority
+enum AnnouncementPriority {
+  low
+  medium
+  high
+}
+
+// Enum for announcement status
+enum AnnouncementStatus {
   published
   draft
 }
