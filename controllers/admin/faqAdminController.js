@@ -26,7 +26,7 @@ const createFAQ = async (req, res, next) => {
         }
 
         // Create FAQ in database
-        const faq = await prisma.faq.create({
+        const faq = await prisma.FAQ.create({
             data: {
                 question: question.trim(),
                 answer: answer.trim(),
@@ -48,7 +48,7 @@ const createFAQ = async (req, res, next) => {
 // Get all FAQs (admin view)
 const getAllFAQs = async (req, res, next) => {
     try {
-        const faqs = await prisma.faq.findMany({
+        const faqs = await prisma.FAQ.findMany({
             orderBy: {
                 createdAt: 'desc',
             },
@@ -68,7 +68,7 @@ const getFAQById = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        const faq = await prisma.faq.findUnique({
+        const faq = await prisma.FAQ.findUnique({
             where: { id },
         });
 
@@ -92,7 +92,7 @@ const updateFAQById = async (req, res, next) => {
         const { question, answer, category, status } = req.body;
 
         // Find existing FAQ
-        const faq = await prisma.faq.findUnique({
+        const faq = await prisma.FAQ.findUnique({
             where: { id },
         });
 
@@ -136,7 +136,7 @@ const updateFAQById = async (req, res, next) => {
         }
 
         // Update FAQ in database
-        const updatedFAQ = await prisma.faq.update({
+        const updatedFAQ = await prisma.FAQ.update({
             where: { id },
             data: updateData,
         });
@@ -157,7 +157,7 @@ const deleteFAQById = async (req, res, next) => {
         const { id } = req.params;
 
         // Find FAQ
-        const faq = await prisma.faq.findUnique({
+        const faq = await prisma.FAQ.findUnique({
             where: { id },
         });
 
@@ -166,7 +166,7 @@ const deleteFAQById = async (req, res, next) => {
         }
 
         // Delete FAQ from database
-        await prisma.faq.delete({
+        await prisma.FAQ.delete({
             where: { id },
         });
 

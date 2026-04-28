@@ -5,7 +5,7 @@ import { prisma } from '../../config/config.js';
 // Get all published FAQs
 const getAllFAQs = async (req, res, next) => {
     try {
-        const faqs = await prisma.faq.findMany({
+        const faqs = await prisma.FAQ.findMany({
             where: {
                 status: 'published',
             },
@@ -28,7 +28,7 @@ const getFAQById = async (req, res, next) => {
     try {
         const { id } = req.params;
 
-        const faq = await prisma.faq.findUnique({
+        const faq = await prisma.FAQ.findUnique({
             where: { id },
         });
 

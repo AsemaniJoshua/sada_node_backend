@@ -59,7 +59,7 @@ const getDashboardStatistics = async (req, res, next) => {
         });
 
         // FAQ Statistics
-        const totalFAQs = await prisma.faq.count();
+        const totalFAQs = await prisma.FAQ.count();
 
         // Journey Statistics
         const totalJourneyEvents = await prisma.journey.count();
