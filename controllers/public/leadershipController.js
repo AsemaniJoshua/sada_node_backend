@@ -2,10 +2,13 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 
-// Get all leadership profiles
+// Get all published leadership profiles
 const getAllLeadership = async (req, res, next) => {
     try {
         const leadership = await prisma.leadership.findMany({
+            where: {
+                status: 'published',
+            },
             orderBy: {
                 createdAt: 'desc',
             },
@@ -20,7 +23,7 @@ const getAllLeadership = async (req, res, next) => {
     }
 };
 
-// Get leadership profile by ID
+// Get published leadership profile by ID
 const getLeadershipById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -30,6 +33,11 @@ const getLeadershipById = async (req, res, next) => {
         });
 
         if (!leadershipProfile) {
+            return next(new AppError('Leadership profile not found', 404, true));
+        }
+
+        // Only return if status is published
+        if (leadershipProfile.status !== 'published') {
             return next(new AppError('Leadership profile not found', 404, true));
         }
 
