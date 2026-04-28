@@ -4,21 +4,16 @@ import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 
 /**
- * Create new blog post with optional images
+ * Create new blog post with optional images and tags
  */
 const createBlogPost = async (req, res, next) => {
     try {
-        const { title, content, author } = req.body;
+        const { title, content, category, status, tags } = req.body;
         const files = req.files;
 
         // Validate required fields
-        if (!title || !content || !author) {
-            throw new AppError('title, content, and author are required', 400, true);
-        }
-
-        // Validate author is non-empty string
-        if (typeof author !== 'string' || author.trim() === '') {
-            throw new AppError('author must be a non-empty string', 400, true);
+        if (!title || !content || !category) {
+            throw new AppError('title, content, and category are required', 400, true);
         }
 
         // Validate title is non-empty string
@@ -29,6 +24,25 @@ const createBlogPost = async (req, res, next) => {
         // Validate content is non-empty string
         if (typeof content !== 'string' || content.trim() === '') {
             throw new AppError('content must be a non-empty string', 400, true);
+        }
+
+        // Validate category
+        if (!['news', 'blog', 'article'].includes(category)) {
+            throw new AppError('category must be "news", "blog", or "article"', 400, true);
+        }
+
+        // Validate status if provided
+        if (status && !['draft', 'published'].includes(status)) {
+            throw new AppError('status must be "draft" or "published"', 400, true);
+        }
+
+        // Validate tags if provided
+        let parsedTags = [];
+        if (tags) {
+            if (!Array.isArray(tags)) {
+                throw new AppError('tags must be an array of strings', 400, true);
+            }
+            parsedTags = tags.filter(tag => typeof tag === 'string' && tag.trim()).map(tag => tag.trim());
         }
 
         // Upload images if provided
@@ -55,7 +69,9 @@ const createBlogPost = async (req, res, next) => {
             data: {
                 title: title.trim(),
                 content: content.trim(),
-                author: author.trim(),
+                category,
+                status: status || 'draft',
+                tags: parsedTags,
                 images: uploadedImages,
             },
         });
@@ -71,15 +87,42 @@ const createBlogPost = async (req, res, next) => {
 };
 
 /**
- * Get all blog posts
- * Ordered by latest first (createdAt desc)
+ * Get all blog posts (admin view) with optional filters
+ * Supports filtering by category, status, and tags
  */
 const getAllBlogPosts = async (req, res, next) => {
     try {
+        const { category, status, tag } = req.query;
+
+        // Build filter conditions
+        const where = {};
+
+        if (category) {
+            if (!['news', 'blog', 'article'].includes(category)) {
+                throw new AppError('category must be "news", "blog", or "article"', 400, true);
+            }
+            where.category = category;
+        }
+
+        if (status) {
+            if (!['draft', 'published'].includes(status)) {
+                throw new AppError('status must be "draft" or "published"', 400, true);
+            }
+            where.status = status;
+        }
+
         // Fetch all blog posts ordered by latest first
-        const blogPosts = await prisma.blogPost.findMany({
+        let blogPosts = await prisma.blogPost.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
         });
+
+        // Filter by tag if provided (JSON array contains)
+        if (tag) {
+            blogPosts = blogPosts.filter(post => 
+                Array.isArray(post.tags) && post.tags.includes(tag)
+            );
+        }
 
         res.status(200).json({
             success: true,
@@ -123,13 +166,13 @@ const getBlogPostById = async (req, res, next) => {
 
 /**
  * Update blog post by ID (PATCH - partial update)
- * Can update title, content, author, and/or images
+ * Can update title, content, category, status, tags, and/or images
  * If new images provided, old images are auto-deleted from Cloudinary
  */
 const updateBlogPostById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, content, author } = req.body;
+        const { title, content, category, status, tags } = req.body;
         const files = req.files;
 
         // Validate ID
@@ -155,8 +198,23 @@ const updateBlogPostById = async (req, res, next) => {
             throw new AppError('content must be a non-empty string', 400, true);
         }
 
-        if (author && (typeof author !== 'string' || author.trim() === '')) {
-            throw new AppError('author must be a non-empty string', 400, true);
+        // Validate category if provided
+        if (category && !['news', 'blog', 'article'].includes(category)) {
+            throw new AppError('category must be "news", "blog", or "article"', 400, true);
+        }
+
+        // Validate status if provided
+        if (status && !['draft', 'published'].includes(status)) {
+            throw new AppError('status must be "draft" or "published"', 400, true);
+        }
+
+        // Validate tags if provided
+        let parsedTags = null;
+        if (tags) {
+            if (!Array.isArray(tags)) {
+                throw new AppError('tags must be an array of strings', 400, true);
+            }
+            parsedTags = tags.filter(tag => typeof tag === 'string' && tag.trim()).map(tag => tag.trim());
         }
 
         // Handle image upload/replacement if new images provided
@@ -193,7 +251,9 @@ const updateBlogPostById = async (req, res, next) => {
         const updateData = {};
         if (title !== undefined) updateData.title = title.trim();
         if (content !== undefined) updateData.content = content.trim();
-        if (author !== undefined) updateData.author = author.trim();
+        if (category !== undefined) updateData.category = category;
+        if (status !== undefined) updateData.status = status;
+        if (parsedTags !== null) updateData.tags = parsedTags;
         if (uploadedImages !== null) updateData.images = uploadedImages;
 
         // Update blog post

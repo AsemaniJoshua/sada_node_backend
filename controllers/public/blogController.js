@@ -3,15 +3,38 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 
 /**
- * Get all blog posts
+ * Get all published blog posts
  * Ordered by latest first (createdAt desc)
+ * Supports filtering by category and tags
  */
 const getAllBlogPosts = async (req, res, next) => {
     try {
-        // Fetch all blog posts ordered by latest first
-        const blogPosts = await prisma.blogPost.findMany({
+        const { category, tag } = req.query;
+
+        // Build filter conditions - only published
+        const where = {
+            status: 'published',
+        };
+
+        if (category) {
+            if (!['news', 'blog', 'article'].includes(category)) {
+                throw new AppError('category must be "news", "blog", or "article"', 400, true);
+            }
+            where.category = category;
+        }
+
+        // Fetch published blog posts ordered by latest first
+        let blogPosts = await prisma.blogPost.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
         });
+
+        // Filter by tag if provided (JSON array contains)
+        if (tag) {
+            blogPosts = blogPosts.filter(post => 
+                Array.isArray(post.tags) && post.tags.includes(tag)
+            );
+        }
 
         // Return blog posts data
         res.status(200).json({
@@ -24,7 +47,7 @@ const getAllBlogPosts = async (req, res, next) => {
 };
 
 /**
- * Get blog post by ID
+ * Get published blog post by ID
  */
 const getBlogPostById = async (req, res, next) => {
     try {
@@ -40,8 +63,12 @@ const getBlogPostById = async (req, res, next) => {
             where: { id },
         });
 
-        // Check if blog post exists
+        // Check if blog post exists and is published
         if (!blogPost) {
+            throw new AppError('Blog post not found', 404, true);
+        }
+
+        if (blogPost.status !== 'published') {
             throw new AppError('Blog post not found', 404, true);
         }
 

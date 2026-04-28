@@ -128,22 +128,29 @@ model Project {
   id          String        @id @default(uuid())
   title       String
   description String        @db.LongText
-  status      ProjectStatus @default(completed)
-  images      Json // [{ url, public_id }]
+  budget      Float
+  category    String
+  progress    Int           // percentage 0-100
+  status      ProjectStatus @default(planned)
+  isFeatured  Boolean       @default(false)
+  start_date  DateTime
+  end_date    DateTime?
+  images      Json          // [{ url, public_id }]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
 
 // BlogPost model - Blog articles with content and images
 model BlogPost {
-  id        String   @id @default(uuid())
+  id        String            @id @default(uuid())
   title     String
-  content   String   @db.LongText
-  author    String
-  date      DateTime @default(now())
-  images    Json     // [{ url, public_id }]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  content   String            @db.LongText
+  category  BlogPostCategory
+  status    BlogPostStatus    @default(draft)
+  tags      Json              // ["tag1", "tag2"]
+  images    Json              // [{ url, public_id }]
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 }
 
 // Gallery model - Photo gallery with multiple images per entry
@@ -298,6 +305,19 @@ enum AnnouncementStatus {
   draft
 }
 
+// Enum for blog post category
+enum BlogPostCategory {
+  news
+  blog
+  article
+}
+
+// Enum for blog post status
+enum BlogPostStatus {
+  published
+  draft
+}
+
 // Enum for membership status
 // enum MembershipStatus {
 //   pending
@@ -307,10 +327,11 @@ enum AnnouncementStatus {
 
 // Enum for project status
 enum ProjectStatus {
-  planning
-  active
+  planned
+  in_progress
+  paused
   completed
-  on_hold
+  cancelled
 }
 
 // Enum for user roles

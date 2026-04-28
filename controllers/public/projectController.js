@@ -3,12 +3,34 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 
 /**
- * Get all projects
+ * Get all featured projects
+ * Only returns projects where isFeatured = true
  */
 const getAllProjects = async (req, res, next) => {
     try {
-        // Fetch all projects ordered by latest first
+        const { status, category } = req.query;
+
+        // Build filter conditions - only featured projects
+        const where = {
+            isFeatured: true,
+        };
+
+        if (status) {
+            const validStatuses = ['planned', 'in_progress', 'paused', 'completed', 'cancelled'];
+            const normalizedStatus = status.replace('-', '_');
+            if (!validStatuses.includes(normalizedStatus)) {
+                throw new AppError('Invalid status. Must be one of: planned, in_progress, paused, completed, cancelled', 400, true);
+            }
+            where.status = normalizedStatus;
+        }
+
+        if (category) {
+            where.category = category;
+        }
+
+        // Fetch featured projects ordered by latest first
         const projects = await prisma.project.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
         });
 
@@ -23,7 +45,8 @@ const getAllProjects = async (req, res, next) => {
 };
 
 /**
- * Get project by ID
+ * Get featured project by ID
+ * Only returns project if isFeatured = true
  */
 const getProjectById = async (req, res, next) => {
     try {
@@ -39,8 +62,12 @@ const getProjectById = async (req, res, next) => {
             where: { id },
         });
 
-        // Check if project exists
+        // Check if project exists and is featured
         if (!project) {
+            throw new AppError('Project not found', 404, true);
+        }
+
+        if (!project.isFeatured) {
             throw new AppError('Project not found', 404, true);
         }
 

@@ -9,12 +9,12 @@ import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../
  */
 const createProject = async (req, res, next) => {
     try {
-        const { title, description, status } = req.body;
+        const { title, description, budget, category, progress, status, isFeatured, start_date, end_date } = req.body;
         const files = req.files;
 
         // Validate required fields
-        if (!title || !description || !status) {
-            throw new AppError('title, description, and status are required', 400, true);
+        if (!title || !description || budget === undefined || !category || progress === undefined || !start_date) {
+            throw new AppError('title, description, budget, category, progress, and start_date are required', 400, true);
         }
 
         // Validate images are provided (required)
@@ -22,11 +22,43 @@ const createProject = async (req, res, next) => {
             throw new AppError('At least one image is required', 400, true);
         }
 
+        // Validate budget is a positive number
+        if (typeof budget !== 'number' || budget <= 0) {
+            throw new AppError('budget must be a positive number', 400, true);
+        }
+
+        // Validate progress is between 0-100
+        if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+            throw new AppError('progress must be a number between 0 and 100', 400, true);
+        }
+
         // Validate status enum
-        const validStatuses = ['planning', 'active', 'completed', 'on-hold', 'on_hold'];
-        const normalizedStatus = status.replace('-', '_');
+        const validStatuses = ['planned', 'in_progress', 'paused', 'completed', 'cancelled'];
+        const normalizedStatus = status ? status.replace('-', '_') : 'planned';
         if (!validStatuses.includes(normalizedStatus)) {
-            throw new AppError('Invalid status. Must be one of: planning, active, completed, on-hold', 400, true);
+            throw new AppError('Invalid status. Must be one of: planned, in_progress, paused, completed, cancelled', 400, true);
+        }
+
+        // Validate isFeatured is boolean if provided
+        if (isFeatured !== undefined && typeof isFeatured !== 'boolean') {
+            throw new AppError('isFeatured must be a boolean', 400, true);
+        }
+
+        // Validate dates
+        const startDate = new Date(start_date);
+        if (isNaN(startDate.getTime())) {
+            throw new AppError('Invalid start_date format', 400, true);
+        }
+
+        let endDate = null;
+        if (end_date) {
+            endDate = new Date(end_date);
+            if (isNaN(endDate.getTime())) {
+                throw new AppError('Invalid end_date format', 400, true);
+            }
+            if (endDate <= startDate) {
+                throw new AppError('end_date must be after start_date', 400, true);
+            }
         }
 
         // Upload all images to Cloudinary
@@ -51,7 +83,13 @@ const createProject = async (req, res, next) => {
             data: {
                 title,
                 description,
+                budget,
+                category,
+                progress,
                 status: normalizedStatus,
+                isFeatured: isFeatured || false,
+                start_date: startDate,
+                end_date: endDate,
                 images: uploadedImages,
             },
         });
@@ -67,12 +105,35 @@ const createProject = async (req, res, next) => {
 };
 
 /**
- * Get all projects
+ * Get all projects (admin view) with optional filters
  */
 const getAllProjects = async (req, res, next) => {
     try {
+        const { status, category, isFeatured } = req.query;
+
+        // Build filter conditions
+        const where = {};
+
+        if (status) {
+            const validStatuses = ['planned', 'in_progress', 'paused', 'completed', 'cancelled'];
+            const normalizedStatus = status.replace('-', '_');
+            if (!validStatuses.includes(normalizedStatus)) {
+                throw new AppError('Invalid status. Must be one of: planned, in_progress, paused, completed, cancelled', 400, true);
+            }
+            where.status = normalizedStatus;
+        }
+
+        if (category) {
+            where.category = category;
+        }
+
+        if (isFeatured !== undefined) {
+            where.isFeatured = isFeatured === 'true' || isFeatured === true;
+        }
+
         // Fetch all projects ordered by latest first
         const projects = await prisma.project.findMany({
+            where,
             orderBy: { createdAt: 'desc' },
         });
 
@@ -118,13 +179,13 @@ const getProjectById = async (req, res, next) => {
 
 /**
  * Update project by ID (PATCH - partial update)
- * Can update title, description, status, and/or images
+ * Can update title, description, budget, category, progress, status, isFeatured, dates, and/or images
  * If new images provided, old images are auto-deleted from Cloudinary
  */
 const updateProjectById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, description, status } = req.body;
+        const { title, description, budget, category, progress, status, isFeatured, start_date, end_date } = req.body;
         const files = req.files;
 
         // Validate ID
@@ -141,12 +202,48 @@ const updateProjectById = async (req, res, next) => {
             throw new AppError('Project not found', 404, true);
         }
 
+        // Validate budget if provided
+        if (budget !== undefined && (typeof budget !== 'number' || budget <= 0)) {
+            throw new AppError('budget must be a positive number', 400, true);
+        }
+
+        // Validate progress if provided
+        if (progress !== undefined && (typeof progress !== 'number' || progress < 0 || progress > 100)) {
+            throw new AppError('progress must be a number between 0 and 100', 400, true);
+        }
+
         // Validate status if provided
         if (status) {
-            const validStatuses = ['planning', 'active', 'completed', 'on-hold', 'on_hold'];
+            const validStatuses = ['planned', 'in_progress', 'paused', 'completed', 'cancelled'];
             const normalizedStatus = status.replace('-', '_');
             if (!validStatuses.includes(normalizedStatus)) {
-                throw new AppError('Invalid status. Must be one of: planning, active, completed, on-hold', 400, true);
+                throw new AppError('Invalid status. Must be one of: planned, in_progress, paused, completed, cancelled', 400, true);
+            }
+        }
+
+        // Validate isFeatured is boolean if provided
+        if (isFeatured !== undefined && typeof isFeatured !== 'boolean') {
+            throw new AppError('isFeatured must be a boolean', 400, true);
+        }
+
+        // Validate dates if provided
+        let startDate = null;
+        let endDate = null;
+        if (start_date) {
+            startDate = new Date(start_date);
+            if (isNaN(startDate.getTime())) {
+                throw new AppError('Invalid start_date format', 400, true);
+            }
+        }
+
+        if (end_date) {
+            endDate = new Date(end_date);
+            if (isNaN(endDate.getTime())) {
+                throw new AppError('Invalid end_date format', 400, true);
+            }
+            const finalStartDate = startDate || existingProject.start_date;
+            if (endDate <= finalStartDate) {
+                throw new AppError('end_date must be after start_date', 400, true);
             }
         }
 
@@ -184,7 +281,13 @@ const updateProjectById = async (req, res, next) => {
         const updateData = {};
         if (title !== undefined) updateData.title = title;
         if (description !== undefined) updateData.description = description;
+        if (budget !== undefined) updateData.budget = budget;
+        if (category !== undefined) updateData.category = category;
+        if (progress !== undefined) updateData.progress = progress;
         if (status !== undefined) updateData.status = status.replace('-', '_');
+        if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
+        if (startDate !== null) updateData.start_date = startDate;
+        if (endDate !== null) updateData.end_date = endDate;
         if (uploadedImages !== null) updateData.images = uploadedImages;
 
         // Update project
