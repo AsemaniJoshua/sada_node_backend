@@ -242,6 +242,21 @@ model Leadership {
   updatedAt   DateTime          @updatedAt
 }
 
+// Event model - Events with date, time and status management
+model Event {
+  id              String      @id @default(uuid())
+  title           String
+  event_type      String
+  location        String
+  description     String      @db.LongText
+  event_banner    Json        // { url, public_id }
+  start_date      DateTime
+  start_time      String      // Format: HH:MM (24-hour)
+  status          EventStatus @default(draft)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
 model Payment {
   id             String   @id @default(uuid())
   memberId       String
@@ -331,6 +346,15 @@ enum ProjectStatus {
   in_progress
   paused
   completed
+  cancelled
+}
+
+// Enum for event status
+enum EventStatus {
+  draft
+  upcoming
+  live
+  past
   cancelled
 }
 
