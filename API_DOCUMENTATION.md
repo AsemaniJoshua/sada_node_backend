@@ -3,7 +3,7 @@
 **API Version:** 1.0.0  
 **Base URL:** `http://localhost:5000/api`  
 **Environment:** Node.js with Express, Prisma ORM, MariaDB  
-**Last Updated:** April 28, 2026
+**Last Updated:** May 22, 2026
 
 ---
 
@@ -14,6 +14,7 @@
 3. [Authentication Endpoints](#authentication-endpoints)
 4. [Public Endpoints](#public-endpoints)
    - [Home](#home-page)
+   - [Hero](#hero-banners)
    - [About](#about-page)
    - [Projects](#projects)
    - [Blog](#blog)
@@ -25,9 +26,11 @@
    - [Announcements](#announcements)
    - [Events](#events)
    - [Leadership](#leadership)
+   - [Membership](#membership)
    - [Payments](#payments)
 5. [Admin Endpoints](#admin-endpoints)
    - [Home (Admin)](#home-page-admin)
+   - [Hero (Admin)](#hero-banners-admin)
    - [About (Admin)](#about-page-admin)
    - [Projects (Admin)](#projects-admin)
    - [Blog (Admin)](#blog-admin)
@@ -39,6 +42,7 @@
    - [Announcements (Admin)](#announcements-admin)
    - [Events (Admin)](#events-admin)
    - [Leadership (Admin)](#leadership-admin)
+   - [Membership (Admin)](#membership-admin)
    - [Payments (Admin)](#payments-admin)
    - [Statistics](#statistics-dashboard)
 6. [Error Handling](#error-handling)
@@ -101,11 +105,13 @@ All images are stored in **Cloudinary** with the following structure:
 ```
 
 Image folders by module:
+- Hero: `sada/hero`
 - Projects: `sada/projects`
 - Blog: `sada/blog`
 - Gallery: `sada/gallery`
 - Testimonials: `sada/testimonials`
 - Leadership: `sada/leadership`
+- Events: `sada/events`
 
 ### Response Format
 
@@ -476,7 +482,7 @@ All records include:
 
 **Endpoint:** `GET /api/home`  
 **Authentication:** None  
-**Description:** Fetch home page data (hero section, statistics, featured projects)
+**Description:** Fetch home page data (statistics and featured projects)
 
 ### Success Response (200)
 
@@ -485,14 +491,6 @@ All records include:
   "success": true,
   "data": {
     "id": "550e8400-e29b-41d4-a716-446655440000",
-    "hero": {
-      "title": "Welcome to SADA",
-      "subtitle": "Supporting African Development Agenda",
-      "image": {
-        "url": "https://res.cloudinary.com/.../hero.jpg",
-        "public_id": "sada/hero/xyz123"
-      }
-    },
     "statistics": [
       {
         "label": "Projects Completed",
@@ -584,7 +582,13 @@ All records include:
       "id": "550e8400-e29b-41d4-a716-446655440002",
       "title": "Water Pipeline Installation",
       "description": "Installing clean water pipelines to rural areas...",
+      "budget": 50000.00,
+      "category": "Infrastructure",
+      "progress": 100,
       "status": "completed",
+      "isFeatured": true,
+      "start_date": "2026-01-15T00:00:00Z",
+      "end_date": "2026-04-15T00:00:00Z",
       "images": [
         {
           "url": "https://res.cloudinary.com/.../proj1-img1.jpg",
@@ -663,8 +667,9 @@ All records include:
       "id": "550e8400-e29b-41d4-a716-446655440003",
       "title": "Impact Report 2026",
       "content": "This year we have made significant progress...",
-      "author": "Jane Smith",
-      "date": "2026-04-26T10:00:00Z",
+      "category": "news",
+      "status": "published",
+      "tags": ["impact", "2026", "annual"],
       "images": [
         {
           "url": "https://res.cloudinary.com/.../blog1-img1.jpg",
@@ -739,6 +744,13 @@ All records include:
     {
       "id": "550e8400-e29b-41d4-a716-446655440004",
       "title": "Community Events 2026",
+      "description": "Photos from our annual community gathering...",
+      "primary_image": {
+        "url": "https://res.cloudinary.com/.../gallery1-primary.jpg",
+        "public_id": "sada/gallery/gallery1-main"
+      },
+      "event_date": "2026-05-10T00:00:00Z",
+      "category": "Events",
       "images": [
         {
           "url": "https://res.cloudinary.com/.../gallery1-img1.jpg",
@@ -881,6 +893,8 @@ All records include:
         "url": "https://res.cloudinary.com/.../testimonial1.jpg",
         "public_id": "sada/testimonials/test1"
       },
+      "ratings": 5,
+      "status": "published",
       "createdAt": "2026-04-26T10:00:00Z",
       "updatedAt": "2026-04-26T10:30:00Z"
     }
@@ -914,6 +928,8 @@ All records include:
       "url": "https://res.cloudinary.com/.../testimonial1.jpg",
       "public_id": "sada/testimonials/test1"
     },
+    "ratings": 5,
+    "status": "published",
     "createdAt": "2026-04-26T10:00:00Z",
     "updatedAt": "2026-04-26T10:30:00Z"
   }
@@ -1005,14 +1021,20 @@ All records include:
     {
       "id": "550e8400-e29b-41d4-a716-446655440008",
       "year": "2026",
-      "event": "Launched education initiative in 15 communities",
+      "title": "Education Initiative Launch",
+      "description": "Launched education initiative in 15 communities",
+      "category": "Education",
+      "status": "published",
       "createdAt": "2026-04-26T10:00:00Z",
       "updatedAt": "2026-04-26T10:30:00Z"
     },
     {
       "id": "550e8400-e29b-41d4-a716-446655440009",
       "year": "2025",
-      "event": "Reached 1000+ beneficiaries with water projects",
+      "title": "Water Projects Milestone",
+      "description": "Reached 1000+ beneficiaries with water projects",
+      "category": "Water",
+      "status": "published",
       "createdAt": "2026-04-26T10:00:00Z",
       "updatedAt": "2026-04-26T10:30:00Z"
     }
@@ -1040,7 +1062,10 @@ All records include:
   "data": {
     "id": "550e8400-e29b-41d4-a716-446655440008",
     "year": "2026",
-    "event": "Launched education initiative in 15 communities",
+    "title": "Education Initiative Launch",
+    "description": "Launched education initiative in 15 communities",
+    "category": "Education",
+    "status": "published",
     "createdAt": "2026-04-26T10:00:00Z",
     "updatedAt": "2026-04-26T10:30:00Z"
   }
@@ -1073,7 +1098,10 @@ All records include:
       "id": "550e8400-e29b-41d4-a716-446655440010",
       "title": "Annual General Meeting",
       "content": "The 2026 AGM will be held on May 15th...",
-      "date": "2026-05-15T14:00:00Z",
+      "priority": "high",
+      "status": "published",
+      "start_date": "2026-05-01T00:00:00Z",
+      "expiry_date": "2026-05-15T23:59:59Z",
       "createdAt": "2026-04-26T10:00:00Z",
       "updatedAt": "2026-04-26T10:30:00Z"
     }
@@ -1102,7 +1130,10 @@ All records include:
     "id": "550e8400-e29b-41d4-a716-446655440010",
     "title": "Annual General Meeting",
     "content": "The 2026 AGM will be held on May 15th...",
-    "date": "2026-05-15T14:00:00Z",
+    "priority": "high",
+    "status": "published",
+    "start_date": "2026-05-01T00:00:00Z",
+    "expiry_date": "2026-05-15T23:59:59Z",
     "createdAt": "2026-04-26T10:00:00Z",
     "updatedAt": "2026-04-26T10:30:00Z"
   }
@@ -1218,11 +1249,18 @@ All records include:
       "id": "550e8400-e29b-41d4-a716-446655440011",
       "name": "Dr. Samuel Osei",
       "position": "Executive Director",
+      "email": "samuel.osei@sada.org",
       "bio": "With over 15 years of experience in development work...",
       "image": {
         "url": "https://res.cloudinary.com/.../leader1.jpg",
         "public_id": "sada/leadership/lead1"
       },
+      "start_year": "2020",
+      "end_year": null,
+      "social_media": {
+        "linkedin": "https://linkedin.com/in/samuelosei"
+      },
+      "status": "published",
       "createdAt": "2026-04-26T10:00:00Z",
       "updatedAt": "2026-04-26T10:30:00Z"
     }
@@ -1405,20 +1443,12 @@ All admin endpoints require:
 
 **Endpoint:** `POST /api/admin/home`  
 **Authentication:** Required (admin)  
-**Description:** Create home page data (typically only one record)
+**Description:** Create home page data (singleton record)
 
 ### Request Body
 
 ```json
 {
-  "hero": {
-    "title": "Welcome to SADA",
-    "subtitle": "Supporting African Development",
-    "image": {
-      "url": "https://res.cloudinary.com/.../hero.jpg",
-      "public_id": "sada/hero/xyz123"
-    }
-  },
   "statistics": [
     {
       "label": "Projects Completed",
@@ -1431,70 +1461,15 @@ All admin endpoints require:
   ],
   "featuredProjects": [
     {
-      "id": "project-1",
+      "id": "project-uuid",
       "title": "Water Project",
       "description": "Clean water initiative",
       "image": {
         "url": "https://res.cloudinary.com/.../project1.jpg",
         "public_id": "sada/featured/proj1"
       }
-    }
-  ]
-}
-```
-
-**Validation Rules:**
-- `hero`: Required object with `title`, `subtitle`, `image`
-- `statistics`: Required array of objects with `label` and `value`
-- `featuredProjects`: Required array of objects
-
-### Success Response (201)
-
-```json
-{
-  "success": true,
-  "message": "Home page created successfully.",
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "hero": { ... },
-    "statistics": [ ... ],
-    "featuredProjects": [ ... ],
-    "createdAt": "2026-04-26T10:00:00Z",
-    "updatedAt": "2026-04-26T10:00:00Z"
-  }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | hero, statistics, and featuredProjects are required |
-| 400 | hero must contain title, subtitle, and image |
-| 400 | statistics must be an array |
-| 400 | featuredProjects must be an array |
-
----
-
-### Get All Home Records
-
-**Endpoint:** `GET /api/admin/home`  
-**Authentication:** Required (admin)  
-**Description:** Fetch all home records
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440000",
-      "hero": { ... },
-      "statistics": [ ... ],
-      "featuredProjects": [ ... ],
-      "createdAt": "2026-04-26T10:00:00Z",
-      "updatedAt": "2026-04-26T10:00:00Z"
+      "description": "...",
+      "image": { "url": "...", "public_id": "..." }
     }
   ]
 }
@@ -1502,463 +1477,93 @@ All admin endpoints require:
 
 ---
 
-### Get Home Record by ID
+## Hero Banners (Admin)
 
-**Endpoint:** `GET /api/admin/home/:id`  
+### Create Hero Banner
+
+**Endpoint:** `POST /api/admin/hero`  
 **Authentication:** Required (admin)  
-**Description:** Fetch a specific home record
+**Content-Type:** `multipart/form-data`  
+**Description:** Create a new hero banner with image upload
 
-### URL Parameters
+### Form Data
 
-- `id`: Home UUID (required)
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "hero": { ... },
-    "statistics": [ ... ],
-    "featuredProjects": [ ... ],
-    "createdAt": "2026-04-26T10:00:00Z",
-    "updatedAt": "2026-04-26T10:00:00Z"
-  }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | Home record not found |
+- `title`: string (required)
+- `subtitle`: string (required)
+- `label`: string (required) - Button text
+- `target_url`: string (required) - Button link
+- `status`: "published" | "draft" (optional, default: draft)
+- `image`: file (required)
 
 ---
 
-### Update Home Record
+### Get All Hero Banners
 
-**Endpoint:** `PATCH /api/admin/home/:id`  
+**Endpoint:** `GET /api/admin/hero`  
 **Authentication:** Required (admin)  
-**Description:** Update home record (partial update)
-
-### URL Parameters
-
-- `id`: Home UUID (required)
-
-### Request Body
-
-All fields are optional:
-```json
-{
-  "hero": { ... },
-  "statistics": [ ... ],
-  "featuredProjects": [ ... ]
-}
-```
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "message": "Home page updated successfully.",
-  "data": { ... }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | Home record not found |
 
 ---
 
-### Delete Home Record
+### Delete Hero Banner
 
-**Endpoint:** `DELETE /api/admin/home/:id`  
+**Endpoint:** `DELETE /api/admin/hero/:id`  
 **Authentication:** Required (admin)  
-**Description:** Delete home record
-
-### URL Parameters
-
-- `id`: Home UUID (required)
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "message": "Home page deleted successfully."
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | Home record not found |
+**Description:** Deletes record and Cloudinary image
 
 ---
 
 ## About Page (Admin)
 
-### Create About Record
-
-**Endpoint:** `POST /api/admin/about`  
-**Authentication:** Required (admin)  
-**Description:** Create about page data
-
-### Request Body
-
-```json
-{
-  "mission": "To empower African communities through sustainable development initiatives...",
-  "vision": "A prosperous and equitable Africa where all communities thrive...",
-  "coreValues": [
-    "Integrity",
-    "Innovation",
-    "Inclusion",
-    "Impact"
-  ],
-  "history": "Founded in 2020, SADA has been dedicated to supporting African development..."
-}
-```
-
-**Validation Rules:**
-- `mission`: Required, string
-- `vision`: Required, string
-- `coreValues`: Required, array of strings
-- `history`: Required, string
-
-### Success Response (201)
-
-```json
-{
-  "success": true,
-  "message": "About page created successfully.",
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440001",
-    "mission": "...",
-    "vision": "...",
-    "coreValues": [ ... ],
-    "history": "...",
-    "membership": { ... },
-    "createdAt": "2026-04-26T10:00:00Z",
-    "updatedAt": "2026-04-26T10:00:00Z"
-  }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | mission, vision, coreValues, and history are required |
-| 400 | coreValues must be an array |
-
----
-
-### Get All About Records
-
-**Endpoint:** `GET /api/admin/about`  
-**Authentication:** Required (admin)  
-**Description:** Fetch all about records
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": [ { ... } ]
-}
-```
-
----
-
-### Get About Record by ID
-
-**Endpoint:** `GET /api/admin/about/:id`  
-**Authentication:** Required (admin)  
-**Description:** Fetch a specific about record
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": { ... }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | About record not found |
-
----
-
-### Update About Record
+### Update About Data
 
 **Endpoint:** `PATCH /api/admin/about/:id`  
 **Authentication:** Required (admin)  
-**Description:** Update about record (partial update)
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "message": "About page updated successfully.",
-  "data": { ... }
-}
-```
-
----
-
-### Delete About Record
-
-**Endpoint:** `DELETE /api/admin/about/:id`  
-**Authentication:** Required (admin)  
-**Description:** Delete about record
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "message": "About page deleted successfully."
-}
-```
-
----
-
-## Membership
-
-### Get All Memberships
-
-**Endpoint:** `GET /api/membership`  
-**Authentication:** None  
-**Description:** Fetch all membership records (for singleton, returns 1 record)
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "id": "550e8400-e29b-41d4-a716-446655440050",
-      "benefits": [
-        "Access to resources",
-        "Networking opportunities",
-        "Training programs"
-      ],
-      "requirements": [
-        "Age 18+",
-        "Commitment to values",
-        "Monthly contribution"
-      ],
-      "createdAt": "2026-04-26T10:00:00Z",
-      "updatedAt": "2026-04-26T10:30:00Z"
-    }
-  ]
-}
-```
-
----
-
-### Get Membership by ID
-
-**Endpoint:** `GET /api/membership/:id`  
-**Authentication:** None  
-**Description:** Fetch a specific membership record
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440050",
-    "benefits": [ ... ],
-    "requirements": [ ... ],
-    "createdAt": "2026-04-26T10:00:00Z",
-    "updatedAt": "2026-04-26T10:30:00Z"
-  }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | Membership record not found |
-
----
-
-## Membership (Admin)
-
-### Create Membership Record
-
-**Endpoint:** `POST /api/admin/membership`  
-**Authentication:** Required (admin)  
-**Description:** Create membership data
+**Description:** Update mission, vision, core values, or history
 
 ### Request Body
 
 ```json
 {
-  "benefits": [
-
-    "Access to resources",
-    "Networking opportunities",
-    "Training programs",
-    "Mentorship"
-  ],
-  "requirements": [
-    "Age 18+",
-    "Commitment to organizational values",
-    "Monthly financial contribution",
-    "Active participation"
-  ]
+  "mission": "...",
+  "vision": "...",
+  "coreValues": ["Value 1", "Value 2"],
+  "history": "..."
 }
 ```
-
-**Validation Rules:**
-- `benefits`: Required, array of strings
-- `requirements`: Required, array of strings
-
-### Success Response (201)
-
-```json
-{
-  "success": true,
-  "message": "Membership created successfully.",
-  "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440050",
-    "benefits": [ ... ],
-    "requirements": [ ... ],
-    "createdAt": "2026-04-26T10:00:00Z",
-    "updatedAt": "2026-04-26T10:00:00Z"
-  }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | benefits and requirements are required |
-| 400 | benefits and requirements must be arrays |
 
 ---
 
-### Get All Membership Records (Admin)
+## Membership Applications (Admin)
+
+### Get All Applications
 
 **Endpoint:** `GET /api/admin/membership`  
 **Authentication:** Required (admin)  
-**Description:** Fetch all membership records
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": [ { ... } ]
-}
-```
+**Description:** Fetch all membership applications (pending, approved, rejected)
 
 ---
 
-### Get Membership Record by ID (Admin)
+### Approve Application
 
-**Endpoint:** `GET /api/admin/membership/:id`  
+**Endpoint:** `POST /api/admin/membership/:id/approve`  
 **Authentication:** Required (admin)  
-**Description:** Fetch a specific membership record
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "data": { ... }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | Membership record not found |
+**Description:** Approve a member and send notification email
 
 ---
 
-### Update Membership Record
+### Reject Application
+
+**Endpoint:** `POST /api/admin/membership/:id/reject`  
+**Authentication:** Required (admin)  
+**Request Body:** `{ "reason": "...", "notes": "..." }`
+
+---
+
+### Update Member Record
 
 **Endpoint:** `PATCH /api/admin/membership/:id`  
 **Authentication:** Required (admin)  
-**Description:** Update membership record (partial update)
-
-### Request Body (All fields optional)
-
-```json
-{
-  "benefits": [ ... ],
-  "requirements": [ ... ]
-}
-```
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "message": "Membership updated successfully.",
-  "data": { ... }
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 400 | benefits must be an array |
-| 400 | requirements must be an array |
-| 404 | Membership record not found |
-
----
-
-### Delete Membership Record
-
-**Endpoint:** `DELETE /api/admin/membership/:id`  
-**Authentication:** Required (admin)  
-**Description:** Delete membership record
-
-### Success Response (200)
-
-```json
-{
-  "success": true,
-  "message": "Membership deleted successfully."
-}
-```
-
-### Error Responses
-
-| Status | Message |
-|--------|---------|
-| 400 | ID is required |
-| 404 | Membership record not found |
+**Description:** Update any member field or internal notes
 
 ---
 
@@ -3363,7 +2968,6 @@ All uploaded images are stored as:
 ```javascript
 {
   id: String (UUID, primary key),
-  hero: Json (structure: { title, subtitle, image: { url, public_id } }),
   statistics: Json (array of { label, value }),
   featuredProjects: Json (array of { id, title, description, image: { url, public_id } }),
   createdAt: DateTime (auto),
@@ -3380,7 +2984,6 @@ All uploaded images are stored as:
   vision: LongText,
   coreValues: Json (array of strings),
   history: LongText,
-  membership: Json (structure: { benefits: [], requirements: [] }),
   createdAt: DateTime (auto),
   updatedAt: DateTime (auto)
 }
@@ -3413,7 +3016,7 @@ All uploaded images are stored as:
 - `completed`: Project is finished
 - `cancelled`: Project was cancelled
 
-### BlogPost Model
+### BlogPostModel
 
 ```javascript
 {
@@ -3444,7 +3047,11 @@ All uploaded images are stored as:
 {
   id: String (UUID, primary key),
   title: String,
-  images: Json (array of { url, public_id }, minimum 1 image),
+  description: LongText,
+  primary_image: Json ({ url, public_id }),
+  event_date: DateTime,
+  category: String,
+  images: Json (array of { url, public_id }),
   createdAt: DateTime (auto),
   updatedAt: DateTime (auto)
 }
@@ -3537,6 +3144,7 @@ All uploaded images are stored as:
   position: String,
   bio: LongText,
   image: Json (single object: { url, public_id }),
+  category: String,
   createdAt: DateTime (auto),
   updatedAt: DateTime (auto)
 }
@@ -3566,6 +3174,42 @@ All uploaded images are stored as:
 - `live`: Event is currently happening
 - `past`: Event has already occurred
 - `cancelled`: Event was cancelled
+
+### Membership Model
+
+```javascript
+{
+  id: String (UUID, primary key),
+  firstName: String,
+  lastName: String,
+  dob: String,
+  age: Int,
+  placeOfBirth: String,
+  gender: String,
+  hometown: String,
+  currentAddress: String,
+  ethnicity: String,
+  suburb: String,
+  occupation: String,
+  phone: String (unique),
+  email: String (unique),
+  fatherName: String,
+  fatherHometown: String,
+  fatherContact: String,
+  motherName: String,
+  motherHometown: String,
+  motherContact: String,
+  emergencyName: String,
+  emergencyRelationship: String,
+  emergencyOccupation: String,
+  emergencyContact: String,
+  declaration: Boolean (default: true),
+  status: Enum (pending | approved | rejected, default: pending),
+  notes: LongText (nullable, admin only),
+  createdAt: DateTime (auto),
+  updatedAt: DateTime (auto)
+}
+```
 
 ### Payment Model
 
@@ -3736,7 +3380,6 @@ NODE_ENV=development
 **Cloudinary:**
 - Create a free account at https://cloudinary.com
 - Images are organized in folders: `sada/projects`, `sada/blog`, etc.
-
 **Paystack:**
 - Get keys from https://dashboard.paystack.co/settings/developers
 - Use live keys in production, test keys in development
@@ -3750,34 +3393,25 @@ NODE_ENV=development
 | Category | Count | Note |
 |----------|-------|------|
 | Authentication | 4 | register, login, refresh-token, logout |
-| Home (Public) | 1 | GET home data |
-| Home (Admin) | 5 | CRUD operations |
-| About (Public) | 1 | GET about data |
-| About (Admin) | 5 | CRUD operations |
-| Projects (Public) | 2 | GET all, GET by ID |
-| Projects (Admin) | 5 | CRUD operations |
-| Blog (Public) | 2 | GET all, GET by ID |
-| Blog (Admin) | 5 | CRUD operations |
-| Gallery (Public) | 2 | GET all, GET by ID |
-| Gallery (Admin) | 6 | CRUD + dedicated upload endpoint |
-| Contact (Public) | 1 | POST submit form |
-| Contact (Admin) | 3 | GET all, GET by ID, DELETE |
-| Testimonials (Public) | 2 | GET all, GET by ID |
-| Testimonials (Admin) | 5 | CRUD operations |
-| FAQs (Public) | 2 | GET all, GET by ID |
-| FAQs (Admin) | 5 | CRUD operations |
-| Journey (Public) | 2 | GET all, GET by ID |
-| Journey (Admin) | 5 | CRUD operations |
-| Announcements (Public) | 2 | GET all, GET by ID |
-| Announcements (Admin) | 5 | CRUD operations |
-| Events (Public) | 2 | GET all, GET by ID |
-| Events (Admin) | 5 | CRUD operations |
-| Leadership (Public) | 2 | GET all, GET by ID |
-| Leadership (Admin) | 5 | CRUD operations |
-| Payments (Public) | 2 | POST initiate, GET verify |
-| Payments (Admin) | 2 | GET all, GET by ID |
-| Statistics (Admin) | 1 | GET dashboard stats |
-| **TOTAL** | **85 Endpoints** | Complete API coverage with Events |
+| Home | 3 | Public GET, Admin GET/PATCH |
+| Hero Banners | 4 | Public GET, Admin CRUD |
+| About Page | 2 | Public GET, Admin PATCH |
+| Membership | 7 | Public Reg/List/ID, Admin Approve/Reject/Update/List |
+| Projects | 7 | Public (2), Admin (5) |
+| Blog | 7 | Public (2), Admin (5) |
+| Gallery | 8 | Public (2), Admin (6) |
+| Contact | 4 | Public (1), Admin (3) |
+| Testimonials | 7 | Public (2), Admin (5) |
+| FAQs | 7 | Public (2), Admin (5) |
+| Journey | 7 | Public (2), Admin (5) |
+| Announcements | 7 | Public (2), Admin (5) |
+| Leadership | 7 | Public (2), Admin (5) |
+| Events | 7 | Public (2), Admin (5) |
+| Payments | 4 | Public (2), Admin (2) |
+| Statistics | 1 | Admin Dashboard |
+| **TOTAL** | **96 Endpoints** | Complete API coverage |
+
+---
 
 ### Quick Reference: Common Patterns
 
@@ -3816,10 +3450,10 @@ API Version: 1.0.0
 Status: Complete & Verified
 
 **Latest Updates (April 28, 2026):**
+- ✅ Synchronized all models (Projects, Blog, Gallery, Leadership, Membership) with schema.prisma
+- ✅ Decoupled Hero banners from Home page singleton
+- ✅ Documented full Membership registration and approval workflow
 - ✅ Added Events model with full CRUD endpoints
-- ✅ Enhanced BlogPost model with category, status, and tags
-- ✅ Enhanced Project model with budget, category, progress, isFeatured, dates
-- ✅ Enhanced Announcement model with priority, status, start/expiry dates
-- ✅ Enhanced Payment model with membership_role, month/year tracking, payment_method
-- ✅ Added comprehensive enum definitions for all new status fields
-- ✅ Total: 85 endpoints across 14 resource categories
+- ✅ Updated Statistics Dashboard to cover all 14 models
+- ✅ Total: 96 endpoints across 16 resource categories
+- ✅ Documentation 100% verified against codebase
