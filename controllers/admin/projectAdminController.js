@@ -22,13 +22,20 @@ const createProject = async (req, res, next) => {
             throw new AppError('At least one image is required', 400, true);
         }
 
+        // Parse and validate numeric fields
+        const parsedBudget = Number(budget);
+        const parsedProgress = Number(progress);
+        
+        // Parse boolean fields
+        const parsedIsFeatured = isFeatured === 'true' || isFeatured === true;
+
         // Validate budget is a positive number
-        if (typeof budget !== 'number' || budget <= 0) {
+        if (isNaN(parsedBudget) || parsedBudget <= 0) {
             throw new AppError('budget must be a positive number', 400, true);
         }
 
         // Validate progress is between 0-100
-        if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+        if (isNaN(parsedProgress) || parsedProgress < 0 || parsedProgress > 100) {
             throw new AppError('progress must be a number between 0 and 100', 400, true);
         }
 
@@ -37,11 +44,6 @@ const createProject = async (req, res, next) => {
         const normalizedStatus = status ? status.replace('-', '_') : 'planned';
         if (!validStatuses.includes(normalizedStatus)) {
             throw new AppError('Invalid status. Must be one of: planned, in_progress, paused, completed, cancelled', 400, true);
-        }
-
-        // Validate isFeatured is boolean if provided
-        if (isFeatured !== undefined && typeof isFeatured !== 'boolean') {
-            throw new AppError('isFeatured must be a boolean', 400, true);
         }
 
         // Validate dates
@@ -83,11 +85,11 @@ const createProject = async (req, res, next) => {
             data: {
                 title,
                 description,
-                budget,
+                budget: parsedBudget,
                 category,
-                progress,
+                progress: parsedProgress,
                 status: normalizedStatus,
-                isFeatured: isFeatured || false,
+                isFeatured: parsedIsFeatured,
                 start_date: startDate,
                 end_date: endDate,
                 images: uploadedImages,
@@ -202,14 +204,22 @@ const updateProjectById = async (req, res, next) => {
             throw new AppError('Project not found', 404, true);
         }
 
-        // Validate budget if provided
-        if (budget !== undefined && (typeof budget !== 'number' || budget <= 0)) {
-            throw new AppError('budget must be a positive number', 400, true);
+        // Parse and validate budget if provided
+        let parsedBudget = undefined;
+        if (budget !== undefined) {
+            parsedBudget = Number(budget);
+            if (isNaN(parsedBudget) || parsedBudget <= 0) {
+                throw new AppError('budget must be a positive number', 400, true);
+            }
         }
 
-        // Validate progress if provided
-        if (progress !== undefined && (typeof progress !== 'number' || progress < 0 || progress > 100)) {
-            throw new AppError('progress must be a number between 0 and 100', 400, true);
+        // Parse and validate progress if provided
+        let parsedProgress = undefined;
+        if (progress !== undefined) {
+            parsedProgress = Number(progress);
+            if (isNaN(parsedProgress) || parsedProgress < 0 || parsedProgress > 100) {
+                throw new AppError('progress must be a number between 0 and 100', 400, true);
+            }
         }
 
         // Validate status if provided
@@ -221,9 +231,10 @@ const updateProjectById = async (req, res, next) => {
             }
         }
 
-        // Validate isFeatured is boolean if provided
-        if (isFeatured !== undefined && typeof isFeatured !== 'boolean') {
-            throw new AppError('isFeatured must be a boolean', 400, true);
+        // Parse isFeatured if provided
+        let parsedIsFeatured = undefined;
+        if (isFeatured !== undefined) {
+            parsedIsFeatured = isFeatured === 'true' || isFeatured === true;
         }
 
         // Validate dates if provided
@@ -281,11 +292,11 @@ const updateProjectById = async (req, res, next) => {
         const updateData = {};
         if (title !== undefined) updateData.title = title;
         if (description !== undefined) updateData.description = description;
-        if (budget !== undefined) updateData.budget = budget;
+        if (parsedBudget !== undefined) updateData.budget = parsedBudget;
         if (category !== undefined) updateData.category = category;
-        if (progress !== undefined) updateData.progress = progress;
+        if (parsedProgress !== undefined) updateData.progress = parsedProgress;
         if (status !== undefined) updateData.status = status.replace('-', '_');
-        if (isFeatured !== undefined) updateData.isFeatured = isFeatured;
+        if (parsedIsFeatured !== undefined) updateData.isFeatured = parsedIsFeatured;
         if (startDate !== null) updateData.start_date = startDate;
         if (endDate !== null) updateData.end_date = endDate;
         if (uploadedImages !== null) updateData.images = uploadedImages;
