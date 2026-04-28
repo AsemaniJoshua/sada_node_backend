@@ -112,6 +112,7 @@ model Membership {
   declaration           Boolean              @default(true)
   status                MembershipStatus     @default(pending)
   notes                 String?              @db.LongText // Private notes for admin only
+  payments              Payment[]
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
 }
@@ -258,16 +259,28 @@ model Event {
 }
 
 model Payment {
-  id             String   @id @default(uuid())
-  memberId       String
-  amount         Decimal  @db.Decimal(10, 2)
-  amountWithFee  Decimal  @db.Decimal(10, 2)
-  purpose        String
-  status         PaymentStatus @default(pending)
-  reference      String   @unique
-  date           DateTime @default(now())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                  String              @id @default(uuid())
+  membership          Membership          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId            String
+  full_name           String
+  email               String
+  membership_role     MembershipRole
+  month_paid_for      Int                 // 1-12
+  year_paid_for       Int
+  amount              Decimal             @db.Decimal(10, 2)
+  amountWithFee       Decimal             @db.Decimal(10, 2)
+  payment_method      String?
+  status              PaymentStatus       @default(pending)
+  reference           String              @unique
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+// Enum for membership role
+enum MembershipRole {
+  standard
+  executive
+  voluntary
 }
 
 // Enum for payment status
