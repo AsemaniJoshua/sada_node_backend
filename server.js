@@ -34,6 +34,7 @@ import adminStatisticsRouter from "./routers/admin/statistics.js";
 import adminMembershipRouter from "./routers/admin/membership.js";
 import adminHeroRouter from "./routers/admin/hero.js";
 import adminEventsRouter from "./routers/admin/events.js";
+import adminUserRouter from "./routers/admin/user.js";
 
 
 // Initializing the express application
@@ -90,6 +91,7 @@ app.use('/api/admin/statistics', adminStatisticsRouter);
 app.use('/api/admin/membership', adminMembershipRouter);
 app.use('/api/admin/hero', adminHeroRouter);
 app.use('/api/admin/events', adminEventsRouter);
+app.use('/api/admin/user', adminUserRouter);
 
 
 
