@@ -71,12 +71,12 @@ const getDashboardStatistics = async (req, res, next) => {
         // Announcement Statistics
         const totalAnnouncements = await prisma.announcement.count();
         const futureAnnouncements = await prisma.announcement.count({
-            where: { date: { gt: new Date() } },
+            where: { start_date: { gt: new Date() } },
         });
         const recentAnnouncements = await prisma.announcement.findMany({
             take: 5,
-            orderBy: { date: 'desc' },
-            select: { id: true, title: true, date: true },
+            orderBy: { start_date: 'desc' },
+            select: { id: true, title: true, start_date: true },
         });
 
         // Leadership Statistics
@@ -98,6 +98,32 @@ const getDashboardStatistics = async (req, res, next) => {
         const averagePaymentAmount = totalPayments > 0 
             ? successfulPayments.reduce((sum, payment) => sum + parseFloat(payment.amountWithFee), 0) / successfulPayments.length
             : 0;
+
+        // Membership Statistics
+        const totalMembers = await prisma.membership.count();
+        const membersByStatus = await prisma.membership.groupBy({
+            by: ['status'],
+            _count: {
+                id: true,
+            },
+        });
+        const recentMembers = await prisma.membership.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: { id: true, firstName: true, lastName: true, status: true, createdAt: true },
+        });
+
+        // Event Statistics
+        const totalEvents = await prisma.event.count();
+        const eventsByStatus = await prisma.event.groupBy({
+            by: ['status'],
+            _count: {
+                id: true,
+            },
+        });
+        const upcomingEvents = await prisma.event.count({
+            where: { start_date: { gt: new Date() } },
+        });
 
         // Refresh Token Statistics
         const totalRefreshTokens = await prisma.refreshToken.count();
@@ -173,11 +199,27 @@ const getDashboardStatistics = async (req, res, next) => {
                 tokens: {
                     activeRefreshTokens: totalRefreshTokens,
                 },
+                membership: {
+                    total: totalMembers,
+                    byStatus: membersByStatus.reduce((acc, status) => {
+                        acc[status.status] = status._count.id;
+                        return acc;
+                    }, {}),
+                    recentApplications: recentMembers,
+                },
+                events: {
+                    total: totalEvents,
+                    byStatus: eventsByStatus.reduce((acc, status) => {
+                        acc[status.status] = status._count.id;
+                        return acc;
+                    }, {}),
+                    upcomingCount: upcomingEvents,
+                },
                 summary: {
-                    totalModels: 14,
+                    totalModels: 16,
                     totalRecords: totalUsers + totalProjects + totalBlogPosts + totalGalleryEntries + 
                                   totalTestimonials + totalContacts + totalFAQs + totalJourneyEvents + 
-                                  totalAnnouncements + totalLeadership + totalPayments,
+                                  totalAnnouncements + totalLeadership + totalPayments + totalMembers + totalEvents,
                 },
             },
         };
