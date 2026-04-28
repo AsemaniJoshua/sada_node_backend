@@ -526,6 +526,80 @@ All records include:
 
 ---
 
+## Hero Banners
+
+### Get All Published Hero Banners
+
+**Endpoint:** `GET /api/hero`  
+**Authentication:** None  
+**Description:** Fetch all hero banners with `published` status
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440010",
+      "title": "Empowering Communities",
+      "subtitle": "Building a sustainable future for all.",
+      "image": {
+        "url": "https://res.cloudinary.com/.../hero1.jpg",
+        "public_id": "sada/heroes/hero1"
+      },
+      "label": "Join Us",
+      "target_url": "/membership",
+      "status": "published",
+      "createdAt": "2026-04-26T10:00:00Z",
+      "updatedAt": "2026-04-26T10:30:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Get Published Hero Banner by ID
+
+**Endpoint:** `GET /api/hero/:id`  
+**Authentication:** None  
+**Description:** Fetch a specific hero banner by ID (must be `published`)
+
+### URL Parameters
+
+- `id`: Hero UUID (required)
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440010",
+    "title": "Empowering Communities",
+    "subtitle": "Building a sustainable future for all.",
+    "image": {
+      "url": "https://res.cloudinary.com/.../hero1.jpg",
+      "public_id": "sada/heroes/hero1"
+    },
+    "label": "Join Us",
+    "target_url": "/membership",
+    "status": "published",
+    "createdAt": "2026-04-26T10:00:00Z",
+    "updatedAt": "2026-04-26T10:30:00Z"
+  }
+}
+```
+
+### Error Responses
+
+| Status | Message |
+|--------|---------|
+| 404 | Hero not found |
+
+---
+
 ## About Page
 
 ### Get About Page Data
@@ -1308,6 +1382,121 @@ All records include:
 
 ---
 
+## Membership
+
+### Register as a Member
+
+**Endpoint:** `POST /api/membership/register`  
+**Authentication:** None  
+**Description:** Submit a new membership application. Requires all personal and emergency details.
+
+### Request Body
+
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "dob": "1990-05-15",
+  "age": 34,
+  "placeOfBirth": "Accra",
+  "gender": "male",
+  "hometown": "Kumasi",
+  "currentAddress": "123 Street, Accra",
+  "ethnicity": "Akan",
+  "suburb": "East Legon",
+  "occupation": "Software Engineer",
+  "phone": "0241234567",
+  "email": "john.doe@example.com",
+  "fatherName": "James Doe",
+  "fatherHometown": "Kumasi",
+  "fatherContact": "0240000001",
+  "motherName": "Janet Doe",
+  "motherHometown": "Kumasi",
+  "motherContact": "0240000002",
+  "emergencyName": "Jill Doe",
+  "emergencyRelationship": "Sister",
+  "emergencyOccupation": "Nurse",
+  "emergencyContact": "0240000003",
+  "declaration": true
+}
+```
+
+### Success Response (201)
+
+```json
+{
+  "success": true,
+  "message": "Membership application submitted successfully. Please check your email for confirmation.",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440015",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "0241234567",
+    "status": "pending",
+    "createdAt": "2026-04-26T10:00:00Z"
+  }
+}
+```
+
+---
+
+### Get All Approved Memberships
+
+**Endpoint:** `GET /api/membership`  
+**Authentication:** None  
+**Description:** Fetch a list of all members with `approved` status. Sensitive data (emergency contacts, parents) is omitted.
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440015",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "phone": "0241234567",
+      "occupation": "Software Engineer",
+      "hometown": "Kumasi",
+      "status": "approved",
+      "createdAt": "2026-04-26T10:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### Get Approved Membership by ID
+
+**Endpoint:** `GET /api/membership/:id`  
+**Authentication:** None  
+**Description:** Fetch details of a specific approved member by ID.
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440015",
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@example.com",
+    "phone": "0241234567",
+    "occupation": "Software Engineer",
+    "hometown": "Kumasi",
+    "status": "approved",
+    "createdAt": "2026-04-26T10:00:00Z"
+  }
+}
+```
+
+---
+
 ## Payments
 
 ### Initiate Payment
@@ -1468,8 +1657,6 @@ All admin endpoints require:
         "url": "https://res.cloudinary.com/.../project1.jpg",
         "public_id": "sada/featured/proj1"
       }
-      "description": "...",
-      "image": { "url": "...", "public_id": "..." }
     }
   ]
 }
@@ -1488,19 +1675,59 @@ All admin endpoints require:
 
 ### Form Data
 
-- `title`: string (required)
-- `subtitle`: string (required)
-- `label`: string (required) - Button text
-- `target_url`: string (required) - Button link
-- `status`: "published" | "draft" (optional, default: draft)
-- `image`: file (required)
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | String | (Required) Title of the banner |
+| `subtitle` | String | (Required) Subtitle text |
+| `image` | File | (Required) Banner image |
+| `label` | String | (Required) Button text |
+| `target_url` | String | (Required) Button destination |
+| `status` | String | (Optional) `published` or `draft` (default: `draft`) |
 
 ---
 
 ### Get All Hero Banners
 
 **Endpoint:** `GET /api/admin/hero`  
-**Authentication:** Required (admin)  
+**Authentication:** Admin Token  
+**Description:** Fetch all hero banners (both `published` and `draft`)
+
+---
+
+### Update Hero Banner
+
+**Endpoint:** `PATCH /api/admin/hero/:id`  
+**Authentication:** Admin Token  
+**Description:** Update a specific hero banner. Supports partial updates and optional image replacement.
+
+### URL Parameters
+
+- `id`: Hero UUID (required)
+
+### Request Body (Multipart/Form-Data)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | String | (Optional) Title of the banner |
+| `subtitle` | String | (Optional) Subtitle text |
+| `image` | File | (Optional) New banner image |
+| `label` | String | (Optional) Button text |
+| `target_url` | String | (Optional) Button destination |
+| `status` | String | (Optional) `published` or `draft` |
+
+### Success Response (200)
+
+```json
+{
+  "success": true,
+  "message": "Hero updated successfully.",
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440010",
+    "title": "Updated Title",
+    "status": "published"
+  }
+}
+```
 
 ---
 
@@ -1883,12 +2110,16 @@ All fields optional: `title`, `content`, `category`, `status`, `tags`, `images` 
 **Content-Type:** `multipart/form-data`  
 **Description:** Create a new gallery entry with multiple images
 
-### Form Data
+### Request Body (Multipart/Form-Data)
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `title` | String | Yes | Non-empty gallery title |
-| `images` | File[] | Yes | 1-10 image files (required) |
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | String | Title of the gallery entry |
+| `description` | String | Detailed description of the event |
+| `event_date` | String | Date of the event (ISO format) |
+| `category` | String | e.g., "Outreach", "Workshop", "Donation" |
+| `primary_image` | File | The main display image (Required) |
+| `images` | File[] | Multiple related images (Required, min: 1) |
 
 ### Success Response (201)
 
@@ -2064,14 +2295,16 @@ All fields optional:
 **Content-Type:** `multipart/form-data`  
 **Description:** Create a new testimonial with a profile image
 
-### Form Data
+### Request Body (Multipart/Form-data)
 
-| Field | Type | Required |
-|-------|------|----------|
-| `name` | String | Yes |
-| `role` | String | Yes |
-| `text` | String | Yes |
-| `image` | File | Yes (single image) |
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Name of the person (Required) |
+| `role` | String | Role or designation (Required) |
+| `text` | String | Testimonial content (Required) |
+| `ratings` | Number | Integer between 1 and 5 (Required) |
+| `image` | File | Profile photo (Required) |
+| `status` | String | `published` or `draft` (default: `draft`) |
 
 ### Success Response (201)
 
@@ -2142,14 +2375,18 @@ All fields optional: `name`, `role`, `text`, `image` (File)
 
 ```json
 {
-  "question": "What is SADA's mission?",
-  "answer": "SADA aims to support African development through community empowerment..."
+  "question": "What is SADA?",
+  "answer": "SADA is a non-profit organization...",
+  "category": "General",
+  "status": "published"
 }
 ```
 
-**Validation Rules:**
-- `question`: Required, non-empty string
-- `answer`: Required, non-empty string
+**Fields:**
+- `question`: Required string
+- `answer`: Required string
+- `category`: Required string
+- `status`: "published" | "draft" (optional, default: draft)
 
 ### Success Response (201)
 
@@ -2159,8 +2396,10 @@ All fields optional: `name`, `role`, `text`, `image` (File)
   "message": "FAQ created successfully.",
   "data": {
     "id": "550e8400-e29b-41d4-a716-446655440007",
-    "question": "What is SADA's mission?",
-    "answer": "SADA aims to support African development...",
+    "question": "What is SADA?",
+    "answer": "SADA is a non-profit organization...",
+    "category": "General",
+    "status": "published",
     "createdAt": "2026-04-26T10:00:00Z",
     "updatedAt": "2026-04-26T10:00:00Z"
   }
@@ -2191,13 +2430,7 @@ All fields optional: `name`, `role`, `text`, `image` (File)
 
 ### Request Body
 
-All fields optional:
-```json
-{
-  "question": "...",
-  "answer": "..."
-}
-```
+All fields optional: `question`, `answer`, `category`, `status`
 
 ---
 
@@ -2220,14 +2453,20 @@ All fields optional:
 
 ```json
 {
-  "year": "2026",
-  "event": "Launched education initiative in 15 communities"
+  "year": "2020",
+  "title": "Foundation",
+  "description": "SADA was officially registered...",
+  "category": "Milestone",
+  "status": "published"
 }
 ```
 
-**Validation Rules:**
-- `year`: Required, non-empty string
-- `event`: Required, non-empty string
+**Fields:**
+- `year`: Required string (e.g., "2020")
+- `title`: Required string
+- `description`: Required string (replaces legacy `event` field)
+- `category`: Required string
+- `status`: "published" | "draft" (optional, default: draft)
 
 ### Success Response (201)
 
@@ -2291,22 +2530,22 @@ All fields optional: `year`, `event`
 
 ```json
 {
-  "title": "Annual General Meeting",
-  "content": "The 2026 AGM will be held on May 15th...",
+  "title": "Annual Report 2025",
+  "content": "Our annual report is now available...",
   "priority": "high",
-  "status": "draft",
-  "start_date": "2026-05-15T14:00:00Z",
-  "expiry_date": "2026-05-20T23:59:59Z"
+  "status": "published",
+  "start_date": "2026-05-01",
+  "expiry_date": "2026-05-31"
 }
 ```
 
-**Validation Rules:**
-- `title`: Required, non-empty string
-- `content`: Required, non-empty string
-- `priority`: Optional, one of: low, medium, high (default: low)
-- `status`: Optional, one of: draft, published (default: draft)
-- `start_date`: Required, ISO 8601 format
-- `expiry_date`: Required, ISO 8601 format, must be after start_date
+**Fields:**
+- `title`: Required string
+- `content`: Required string
+- `priority`: "low" | "medium" | "high" (default: low)
+- `status`: "published" | "draft" (default: draft)
+- `start_date`: Required date
+- `expiry_date`: Required date
 
 ### Success Response (201)
 
@@ -2377,7 +2616,7 @@ All fields optional: `year`, `event`
 
 ### Request Body
 
-All fields optional: `title`, `content`, `date`
+All fields optional: `title`, `content`, `priority`, `status`, `start_date`, `expiry_date`
 
 ---
 
@@ -2570,14 +2809,19 @@ All fields are optional:
 **Content-Type:** `multipart/form-data`  
 **Description:** Create a new leadership profile with image
 
-### Form Data
+### Request Body (Multipart/Form-data)
 
-| Field | Type | Required |
-|-------|------|----------|
-| `name` | String | Yes |
-| `position` | String | Yes |
-| `bio` | String | Yes |
-| `image` | File | Yes (single image) |
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | String | Full name (Required) |
+| `role` | String | Position/Title (Required) |
+| `email` | String | Professional email (Required) |
+| `bio` | String | Short biography (Required) |
+| `image` | File | Professional headshot (Required) |
+| `start_year` | String | Year they joined (Required) |
+| `end_year` | String | (Optional) Year they left |
+| `social_media` | Json | (Optional) `{ "linkedin": "...", "twitter": "..." }` |
+| `status` | String | `published` or `draft` (default: `draft`) |
 
 ### Success Response (201)
 
@@ -2631,7 +2875,7 @@ All fields are optional:
 
 ### Form Data
 
-All fields optional: `name`, `position`, `bio`, `image` (File)
+All fields optional: `name`, `role`, `email`, `bio`, `start_year`, `end_year`, `social_media` (JSON string), `status`, `image` (File)
 
 ---
 
@@ -3093,6 +3337,8 @@ All uploaded images are stored as:
   id: String (UUID, primary key),
   question: String,
   answer: LongText,
+  category: String,
+  status: Enum (draft | published, default: draft),
   createdAt: DateTime (auto),
   updatedAt: DateTime (auto)
 }
@@ -3104,7 +3350,10 @@ All uploaded images are stored as:
 {
   id: String (UUID, primary key),
   year: String,
-  event: LongText,
+  title: String,
+  description: LongText,
+  category: String,
+  status: Enum (draft | published, default: draft),
   createdAt: DateTime (auto),
   updatedAt: DateTime (auto)
 }
@@ -3141,10 +3390,15 @@ All uploaded images are stored as:
 {
   id: String (UUID, primary key),
   name: String,
-  position: String,
+  role: String,
   bio: LongText,
   image: Json (single object: { url, public_id }),
-  category: String,
+  email: String (optional),
+  start_year: String,
+  end_year: String (optional),
+  social_media: Json (optional),
+  status: Enum (published | draft, default: published),
+
   createdAt: DateTime (auto),
   updatedAt: DateTime (auto)
 }
