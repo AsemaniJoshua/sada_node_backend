@@ -5,22 +5,38 @@ import { prisma } from '../../config/config.js';
 // Create new journey milestone
 const createJourney = async (req, res, next) => {
     try {
-        const { year, event } = req.body;
+        const { year, title, description, category, status } = req.body;
 
         // Validate required fields
         if (!year || !year.trim()) {
             return next(new AppError('Year is required and cannot be empty', 400, true));
         }
 
-        if (!event || !event.trim()) {
-            return next(new AppError('Event is required and cannot be empty', 400, true));
+        if (!title || !title.trim()) {
+            return next(new AppError('Title is required and cannot be empty', 400, true));
+        }
+
+        if (!description || !description.trim()) {
+            return next(new AppError('Description is required and cannot be empty', 400, true));
+        }
+
+        if (!category || !category.trim()) {
+            return next(new AppError('Category is required and cannot be empty', 400, true));
+        }
+
+        // Validate status if provided
+        if (status && !['published', 'draft'].includes(status)) {
+            return next(new AppError('Status must be either "published" or "draft"', 400, true));
         }
 
         // Create journey in database
         const journey = await prisma.journey.create({
             data: {
                 year: year.trim(),
-                event: event.trim(),
+                title: title.trim(),
+                description: description.trim(),
+                category: category.trim(),
+                status: status || 'draft',
             },
         });
 
@@ -78,7 +94,7 @@ const getJourneyById = async (req, res, next) => {
 const updateJourneyById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { year, event } = req.body;
+        const { year, title, description, category, status } = req.body;
 
         // Find existing journey
         const journey = await prisma.journey.findUnique({
@@ -100,12 +116,36 @@ const updateJourneyById = async (req, res, next) => {
             updateData.year = year.trim();
         }
 
-        // Update event if provided
-        if (event) {
-            if (!event.trim()) {
-                return next(new AppError('Event cannot be empty', 400, true));
+        // Update title if provided
+        if (title) {
+            if (!title.trim()) {
+                return next(new AppError('Title cannot be empty', 400, true));
             }
-            updateData.event = event.trim();
+            updateData.title = title.trim();
+        }
+
+        // Update description if provided
+        if (description) {
+            if (!description.trim()) {
+                return next(new AppError('Description cannot be empty', 400, true));
+            }
+            updateData.description = description.trim();
+        }
+
+        // Update category if provided
+        if (category) {
+            if (!category.trim()) {
+                return next(new AppError('Category cannot be empty', 400, true));
+            }
+            updateData.category = category.trim();
+        }
+
+        // Update status if provided
+        if (status) {
+            if (!['published', 'draft'].includes(status)) {
+                return next(new AppError('Status must be either "published" or "draft"', 400, true));
+            }
+            updateData.status = status;
         }
 
         // Update journey in database

@@ -2,10 +2,13 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 
-// Get all journey milestones
+// Get all published journey milestones
 const getAllJourneys = async (req, res, next) => {
     try {
         const journeys = await prisma.journey.findMany({
+            where: {
+                status: 'published',
+            },
             orderBy: {
                 createdAt: 'desc',
             },
@@ -20,7 +23,7 @@ const getAllJourneys = async (req, res, next) => {
     }
 };
 
-// Get journey milestone by ID
+// Get published journey milestone by ID
 const getJourneyById = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -30,6 +33,11 @@ const getJourneyById = async (req, res, next) => {
         });
 
         if (!journey) {
+            return next(new AppError('Journey milestone not found', 404, true));
+        }
+
+        // Only return if status is published
+        if (journey.status !== 'published') {
             return next(new AppError('Journey milestone not found', 404, true));
         }
 
