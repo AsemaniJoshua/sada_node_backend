@@ -50,14 +50,26 @@ model PasswordReset {
   updatedAt DateTime @updatedAt
 }
 
-// Home model - Singleton page for hero, statistics, and featured projects
+// Home model - Singleton page for statistics and featured projects
 model Home {
   id               String   @id @default(uuid())
-  hero             Json // { title, subtitle, image: { url, public_id } }
   statistics       Json // [{ label, value }]
   featuredProjects Json // [{ id, title, description, image: { url, public_id } }]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
+}
+
+// Hero model - Hero banner with image and call-to-action
+model Hero {
+  id         String     @id @default(uuid())
+  title      String
+  subtitle   String
+  image      Json       // { url, public_id }
+  label      String
+  target_url String
+  status     HeroStatus @default(draft)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 }
 
 // About model - Singleton page for mission, vision, and organization details
@@ -245,6 +257,12 @@ enum TestimonialStatus {
 
 // Enum for journey status
 enum JourneyStatus {
+  published
+  draft
+}
+
+// Enum for hero status
+enum HeroStatus {
   published
   draft
 }

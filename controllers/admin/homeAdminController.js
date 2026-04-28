@@ -9,16 +9,11 @@ import { deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUploa
  */
 const createHome = async (req, res, next) => {
     try {
-        const { hero, statistics, featuredProjects } = req.body;
+        const { statistics, featuredProjects } = req.body;
 
         // Validate required fields
-        if (!hero || !statistics || !featuredProjects) {
-            throw new AppError('hero, statistics, and featuredProjects are required', 400, true);
-        }
-
-        // Validate hero object
-        if (!hero.title || !hero.subtitle || !hero.image) {
-            throw new AppError('hero must contain title, subtitle, and image', 400, true);
+        if (!statistics || !featuredProjects) {
+            throw new AppError('statistics and featuredProjects are required', 400, true);
         }
 
         // Validate statistics is array
@@ -34,7 +29,6 @@ const createHome = async (req, res, next) => {
         // Create home record
         const home = await prisma.home.create({
             data: {
-                hero,
                 statistics,
                 featuredProjects,
             },
@@ -104,7 +98,7 @@ const getHomeById = async (req, res, next) => {
 const updateHomeById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { hero, statistics, featuredProjects } = req.body;
+        const { statistics, featuredProjects } = req.body;
 
         // Validate ID
         if (!id) {
@@ -131,7 +125,6 @@ const updateHomeById = async (req, res, next) => {
 
         // Build update data (only include provided fields)
         const updateData = {};
-        if (hero !== undefined) updateData.hero = hero;
         if (statistics !== undefined) updateData.statistics = statistics;
         if (featuredProjects !== undefined) updateData.featuredProjects = featuredProjects;
 
@@ -174,11 +167,6 @@ const deleteHomeById = async (req, res, next) => {
 
         // Collect all Cloudinary public_ids for deletion
         const publicIds = [];
-
-        // Extract hero image public_id
-        if (home.hero && home.hero.image && home.hero.image.public_id) {
-            publicIds.push(home.hero.image.public_id);
-        }
 
         // Extract featured projects image public_ids
         if (home.featuredProjects && Array.isArray(home.featuredProjects)) {
