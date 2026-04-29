@@ -18,6 +18,7 @@ import publicPaymentsRouter from "./routers/public/payments.js";
 import publicMembershipRouter from "./routers/public/membership.js";
 import publicHeroRouter from "./routers/public/hero.js";
 import publicEventsRouter from "./routers/public/events.js";
+import publicStatisticsRouter from "./routers/public/statistics.js";
 import adminHomeRouter from "./routers/admin/home.js";
 import adminAboutRouter from "./routers/admin/about.js";
 import adminProjectRouter from "./routers/admin/projects.js";
@@ -74,6 +75,7 @@ app.use('/api/payments', publicPaymentsRouter);
 app.use('/api/membership', publicMembershipRouter);
 app.use('/api/hero', publicHeroRouter);
 app.use('/api/events', publicEventsRouter);
+app.use('/api/statistics', publicStatisticsRouter);
 // Admin routes
 app.use('/api/admin/home', adminHomeRouter);
 app.use('/api/admin/about', adminAboutRouter);
