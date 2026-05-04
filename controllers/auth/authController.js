@@ -30,7 +30,7 @@ const register = async (req, res, next) => {
 
         // Validate and set role (default to 'user' if not provided)
         const allowedRoles = ['admin', 'user'];
-        let userRole = role && role.trim() ? role.trim() : 'user';
+        let userRole = role && role.trim() ? role.trim() : 'admin';
 
         if (!allowedRoles.includes(userRole)) {
             throw new AppError(`Invalid role. Must be one of: ${allowedRoles.join(', ')}`, 400, true);
