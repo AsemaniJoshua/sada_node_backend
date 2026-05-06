@@ -10,7 +10,7 @@ import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config
  */
 const updateProfile = async (req, res, next) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         const { name, email, oldPassword, newPassword, confirmNewPassword } = req.body;
         const file = req.file;
 
@@ -367,7 +367,7 @@ const deleteUserById = async (req, res, next) => {
 
         // Prevent admin from deleting themselves through this endpoint
         // (They should use a specific self-delete or be deleted by another admin)
-        if (user.id === req.user.id) {
+        if (user.id === req.user.userId) {
             throw new AppError('You cannot delete your own account from the user management list.', 400, true);
         }
 
