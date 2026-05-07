@@ -412,9 +412,17 @@ const forgotPassword = async (req, res, next) => {
         };
 
         // Send email asynchronously (don't wait for response)
-        await transporter.sendMail(mailOptions, (error) => {
+        // await transporter.sendMail(mailOptions, (error) => {
+        //     if (error) {
+        //         console.error('Error sending OTP email:', error);
+        //     }
+        // });
+
+        transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                console.error('Error sending OTP email:', error);
+                console.error('Email sending error:', error);
+            } else {
+                console.log('Email sent successfully:', info.response);
             }
         });
 
