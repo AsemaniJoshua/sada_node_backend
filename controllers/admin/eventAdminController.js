@@ -3,6 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { broadcastNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Create new event with banner image
@@ -72,6 +73,16 @@ const createEvent = async (req, res, next) => {
             description: `Created event: "${event.title}"`,
             metadata: { title: event.title, event_type: event.event_type, status: event.status },
         });
+
+        // Send push notification
+        if (['upcoming', 'live'].includes(event.status)) {
+            broadcastNotification({
+                title: 'New Event Scheduled!',
+                body: `${event.title} - ${event.location}`,
+                url: `/events/${event.id}`,
+                icon: event.event_banner?.url || null
+            });
+        }
 
         res.status(201).json({
             success: true,
@@ -246,6 +257,19 @@ const updateEventById = async (req, res, next) => {
             description: `Updated event: "${updatedEvent.title}"`,
             metadata: { title: updatedEvent.title, status: updatedEvent.status },
         });
+
+        // Smart Notification: Only notify if it was NOT visible before, but is NOW upcoming/live
+        const wasVisible = ['upcoming', 'live'].includes(existingEvent.status);
+        const isVisible = ['upcoming', 'live'].includes(updatedEvent.status);
+
+        if (!wasVisible && isVisible) {
+            broadcastNotification({
+                title: 'New Event Scheduled!',
+                body: `${updatedEvent.title} - ${updatedEvent.location}`,
+                url: `/events/${updatedEvent.id}`,
+                icon: updatedEvent.event_banner?.url || null
+            });
+        }
 
         res.status(200).json({
             success: true,

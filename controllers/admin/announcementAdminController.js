@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { broadcastNotification } from '../../utils/notifications/pushService.js';
 
 // Create new announcement
 const createAnnouncement = async (req, res, next) => {
@@ -68,6 +69,15 @@ const createAnnouncement = async (req, res, next) => {
             description: `Created announcement: "${announcement.title}"`,
             metadata: { title: announcement.title, priority: announcement.priority, status: announcement.status },
         });
+
+        // Send push notification
+        if (announcement.status === 'published') {
+            broadcastNotification({
+                title: 'New Announcement!',
+                body: announcement.title,
+                url: `/announcements/${announcement.id}`
+            });
+        }
 
         res.status(201).json({
             success: true,
@@ -248,6 +258,15 @@ const updateAnnouncementById = async (req, res, next) => {
             description: `Updated announcement: "${updatedAnnouncement.title}"`,
             metadata: updateData,
         });
+
+        // Smart Notification: Only notify if it was NOT published before, but is NOW published
+        if (existingAnnouncement.status !== 'published' && updatedAnnouncement.status === 'published') {
+            broadcastNotification({
+                title: 'New Announcement!',
+                body: updatedAnnouncement.title,
+                url: `/announcements/${updatedAnnouncement.id}`
+            });
+        }
 
         res.status(200).json({
             success: true,

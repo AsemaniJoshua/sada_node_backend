@@ -3,6 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { broadcastNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Create new blog post with optional images and tags
@@ -86,6 +87,16 @@ const createBlogPost = async (req, res, next) => {
             description: `Created blog post: "${blogPost.title}"`,
             metadata: { title: blogPost.title, category: blogPost.category, status: blogPost.status },
         });
+
+        // Send push notification
+        if (blogPost.status === 'published') {
+            broadcastNotification({
+                title: 'New Blog Post!',
+                body: blogPost.title,
+                url: `/blog/${blogPost.id}`,
+                icon: blogPost.images?.[0]?.url || null
+            });
+        }
 
         res.status(201).json({
             success: true,
@@ -282,6 +293,16 @@ const updateBlogPostById = async (req, res, next) => {
             description: `Updated blog post: "${updatedBlogPost.title}"`,
             metadata: { title: updatedBlogPost.title, category: updatedBlogPost.category, status: updatedBlogPost.status },
         });
+
+        // Smart Notification: Only notify if it was NOT published before, but is NOW published
+        if (existingBlogPost.status !== 'published' && updatedBlogPost.status === 'published') {
+            broadcastNotification({
+                title: 'New Blog Post!',
+                body: updatedBlogPost.title,
+                url: `/blog/${updatedBlogPost.id}`,
+                icon: updatedBlogPost.images?.[0]?.url || null
+            });
+        }
 
         res.status(200).json({
             success: true,
