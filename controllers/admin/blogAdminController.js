@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Create new blog post with optional images and tags
@@ -74,6 +75,16 @@ const createBlogPost = async (req, res, next) => {
                 tags: parsedTags,
                 images: uploadedImages,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Blog',
+            entity: 'BlogPost',
+            entityId: blogPost.id,
+            description: `Created blog post: "${blogPost.title}"`,
+            metadata: { title: blogPost.title, category: blogPost.category, status: blogPost.status },
         });
 
         res.status(201).json({
@@ -262,6 +273,16 @@ const updateBlogPostById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Blog',
+            entity: 'BlogPost',
+            entityId: id,
+            description: `Updated blog post: "${updatedBlogPost.title}"`,
+            metadata: { title: updatedBlogPost.title, category: updatedBlogPost.category, status: updatedBlogPost.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Blog post updated successfully.',
@@ -311,6 +332,16 @@ const deleteBlogPostById = async (req, res, next) => {
         // Delete blog post from database
         await prisma.blogPost.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Blog',
+            entity: 'BlogPost',
+            entityId: id,
+            description: `Deleted blog post: "${blogPost.title}"`,
+            metadata: { id, title: blogPost.title },
         });
 
         res.status(200).json({

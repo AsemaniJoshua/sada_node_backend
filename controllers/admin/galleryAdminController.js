@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create new gallery entry with primary image and related images
 const createGallery = async (req, res, next) => {
@@ -53,6 +54,16 @@ const createGallery = async (req, res, next) => {
                 category: category.trim(),
                 images: relatedImages,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Gallery',
+            entity: 'Gallery',
+            entityId: gallery.id,
+            description: `Created gallery entry: "${gallery.title}"`,
+            metadata: { title: gallery.title, category: gallery.category },
         });
 
         res.status(201).json({
@@ -188,6 +199,16 @@ const updateGalleryById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Gallery',
+            entity: 'Gallery',
+            entityId: id,
+            description: `Updated gallery entry: "${updatedGallery.title}"`,
+            metadata: { title: updatedGallery.title, category: updatedGallery.category },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Gallery entry updated successfully.',
@@ -229,6 +250,16 @@ const deleteGalleryById = async (req, res, next) => {
         // Delete gallery from database
         await prisma.gallery.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Gallery',
+            entity: 'Gallery',
+            entityId: id,
+            description: `Deleted gallery entry: "${gallery.title}"`,
+            metadata: { id, title: gallery.title, category: gallery.category },
         });
 
         res.status(200).json({

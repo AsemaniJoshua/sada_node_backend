@@ -26,6 +26,21 @@ model User {
   updatedAt       DateTime          @updatedAt
   refreshTokens   RefreshToken[]
   passwordResets  PasswordReset[]
+  activities      UserActivity[]
+}
+
+// UserActivity model - audit log for all admin mutations
+model UserActivity {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action      ActivityAction
+  logType     ActivityLogType
+  entity      String            // e.g. "BlogPost", "Hero", "Membership"
+  entityId    String?           // ID of the affected record
+  description String            @db.LongText // Human-readable summary
+  metadata    Json?             // Optional extra context (title, name, status, etc.)
+  createdAt   DateTime          @default(now())
 }
 
 // RefreshToken model for token management
@@ -376,4 +391,34 @@ enum EventStatus {
 enum Role {
   admin
   user
+}
+
+// Enum for activity log action types
+enum ActivityAction {
+  create
+  update
+  delete
+  approve
+  reject
+}
+
+// Enum for activity log category (used for filtering)
+enum ActivityLogType {
+  Auth
+  Users
+  Blog
+  Gallery
+  Events
+  Projects
+  Membership
+  Payments
+  Hero
+  Announcements
+  FAQs
+  Journey
+  Leadership
+  Testimonials
+  Contact
+  Home
+  About
 }

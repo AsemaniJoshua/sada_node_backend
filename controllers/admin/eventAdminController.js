@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Create new event with banner image
@@ -60,6 +61,16 @@ const createEvent = async (req, res, next) => {
                 start_time: start_time.trim(),
                 status: normalizedStatus,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Events',
+            entity: 'Event',
+            entityId: event.id,
+            description: `Created event: "${event.title}"`,
+            metadata: { title: event.title, event_type: event.event_type, status: event.status },
         });
 
         res.status(201).json({
@@ -226,6 +237,16 @@ const updateEventById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Events',
+            entity: 'Event',
+            entityId: id,
+            description: `Updated event: "${updatedEvent.title}"`,
+            metadata: { title: updatedEvent.title, status: updatedEvent.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Event updated successfully.',
@@ -270,6 +291,16 @@ const deleteEventById = async (req, res, next) => {
         // Delete event from database
         await prisma.event.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Events',
+            entity: 'Event',
+            entityId: id,
+            description: `Deleted event: "${event.title}"`,
+            metadata: { id, title: event.title, event_type: event.event_type },
         });
 
         res.status(200).json({

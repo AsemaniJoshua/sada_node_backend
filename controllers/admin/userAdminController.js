@@ -3,6 +3,7 @@ import { hash, verify } from 'argon2';
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Update current admin profile
@@ -105,6 +106,16 @@ const updateProfile = async (req, res, next) => {
                 createdAt: true,
                 updatedAt: true,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Users',
+            entity: 'User',
+            entityId: updatedUser.id,
+            description: `Updated own profile (name: ${updatedUser.name})`,
+            metadata: { name: updatedUser.name, email: updatedUser.email },
         });
 
         res.status(200).json({
@@ -240,6 +251,16 @@ const createUser = async (req, res, next) => {
             },
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Users',
+            entity: 'User',
+            entityId: newUser.id,
+            description: `Created new user: ${newUser.name} (${newUser.email})`,
+            metadata: { name: newUser.name, email: newUser.email, role: newUser.role },
+        });
+
         res.status(201).json({
             success: true,
             message: 'User created successfully.',
@@ -338,6 +359,16 @@ const updateUserById = async (req, res, next) => {
             },
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Users',
+            entity: 'User',
+            entityId: id,
+            description: `Updated user: ${updatedUser.name} (${updatedUser.email})`,
+            metadata: { name: updatedUser.name, email: updatedUser.email, role: updatedUser.role },
+        });
+
         res.status(200).json({
             success: true,
             message: 'User updated successfully.',
@@ -380,6 +411,16 @@ const deleteUserById = async (req, res, next) => {
         if (user.image && typeof user.image === 'object' && user.image.public_id) {
             await deleteImageFromCloudinary(user.image.public_id);
         }
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Users',
+            entity: 'User',
+            entityId: id,
+            description: `Deleted user: ${user.name} (${user.email})`,
+            metadata: { id, name: user.name, email: user.email, role: user.role },
+        });
 
         res.status(200).json({
             success: true,

@@ -1,6 +1,7 @@
 // Admin Journey controller with CRUD operations
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create new journey milestone
 const createJourney = async (req, res, next) => {
@@ -38,6 +39,16 @@ const createJourney = async (req, res, next) => {
                 category: category.trim(),
                 status: status || 'draft',
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Journey',
+            entity: 'Journey',
+            entityId: journey.id,
+            description: `Created journey milestone: "${journey.title}" (${journey.year})`,
+            metadata: { title: journey.title, year: journey.year, category: journey.category, status: journey.status },
         });
 
         res.status(201).json({
@@ -154,6 +165,16 @@ const updateJourneyById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Journey',
+            entity: 'Journey',
+            entityId: id,
+            description: `Updated journey milestone: "${updatedJourney.title}"`,
+            metadata: { title: updatedJourney.title, year: updatedJourney.year, status: updatedJourney.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Journey milestone updated successfully.',
@@ -181,6 +202,16 @@ const deleteJourneyById = async (req, res, next) => {
         // Delete journey from database
         await prisma.journey.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Journey',
+            entity: 'Journey',
+            entityId: id,
+            description: `Deleted journey milestone: "${journey.title}"`,
+            metadata: { id, title: journey.title, year: journey.year },
         });
 
         res.status(200).json({

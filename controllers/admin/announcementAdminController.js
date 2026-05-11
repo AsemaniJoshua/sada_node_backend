@@ -1,6 +1,7 @@
 // Admin Announcements controller with CRUD operations
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create new announcement
 const createAnnouncement = async (req, res, next) => {
@@ -56,6 +57,16 @@ const createAnnouncement = async (req, res, next) => {
                 start_date: startDate,
                 expiry_date: expiryDate,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Announcements',
+            entity: 'Announcement',
+            entityId: announcement.id,
+            description: `Created announcement: "${announcement.title}"`,
+            metadata: { title: announcement.title, priority: announcement.priority, status: announcement.status },
         });
 
         res.status(201).json({
@@ -228,6 +239,16 @@ const updateAnnouncementById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Announcements',
+            entity: 'Announcement',
+            entityId: id,
+            description: `Updated announcement: "${updatedAnnouncement.title}"`,
+            metadata: updateData,
+        });
+
         res.status(200).json({
             success: true,
             message: 'Announcement updated successfully.',
@@ -255,6 +276,16 @@ const deleteAnnouncementById = async (req, res, next) => {
         // Delete announcement from database
         await prisma.announcement.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Announcements',
+            entity: 'Announcement',
+            entityId: id,
+            description: `Deleted announcement: "${announcement.title}"`,
+            metadata: { id, title: announcement.title },
         });
 
         res.status(200).json({

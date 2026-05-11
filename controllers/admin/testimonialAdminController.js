@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create new testimonial with image upload
 const createTestimonial = async (req, res, next) => {
@@ -54,6 +55,16 @@ const createTestimonial = async (req, res, next) => {
                 ratings: ratingsNum,
                 status: status || 'draft',
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Testimonials',
+            entity: 'Testimonial',
+            entityId: testimonial.id,
+            description: `Created testimonial from: ${testimonial.name} (${testimonial.role})`,
+            metadata: { name: testimonial.name, role: testimonial.role, ratings: testimonial.ratings, status: testimonial.status },
         });
 
         res.status(201).json({
@@ -184,6 +195,16 @@ const updateTestimonialById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Testimonials',
+            entity: 'Testimonial',
+            entityId: id,
+            description: `Updated testimonial from: ${updatedTestimonial.name}`,
+            metadata: { name: updatedTestimonial.name, role: updatedTestimonial.role, status: updatedTestimonial.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Testimonial updated successfully.',
@@ -216,6 +237,16 @@ const deleteTestimonialById = async (req, res, next) => {
         // Delete testimonial from database
         await prisma.testimonial.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Testimonials',
+            entity: 'Testimonial',
+            entityId: id,
+            description: `Deleted testimonial from: ${testimonial.name}`,
+            metadata: { id, name: testimonial.name, role: testimonial.role },
         });
 
         res.status(200).json({

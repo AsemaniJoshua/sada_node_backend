@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Create new hero banner with image upload
@@ -50,6 +51,16 @@ const createHero = async (req, res, next) => {
                 image: { url, public_id },
                 status: status || 'draft',
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Hero',
+            entity: 'Hero',
+            entityId: hero.id,
+            description: `Created hero banner: "${hero.title}"`,
+            metadata: { title: hero.title, status: hero.status },
         });
 
         res.status(201).json({
@@ -185,6 +196,16 @@ const updateHeroById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Hero',
+            entity: 'Hero',
+            entityId: id,
+            description: `Updated hero banner: "${updatedHero.title}"`,
+            metadata: { title: updatedHero.title, status: updatedHero.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Hero updated successfully.',
@@ -219,6 +240,16 @@ const deleteHeroById = async (req, res, next) => {
         // Delete hero from database
         await prisma.hero.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Hero',
+            entity: 'Hero',
+            entityId: id,
+            description: `Deleted hero banner: "${hero.title}"`,
+            metadata: { id, title: hero.title },
         });
 
         res.status(200).json({

@@ -1,6 +1,7 @@
 // Admin contact controller - View form submissions
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Get all contact submissions
 const getAllContacts = async (req, res, next) => {
@@ -59,6 +60,16 @@ const deleteContactById = async (req, res, next) => {
         // Delete contact from database
         await prisma.contact.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Contact',
+            entity: 'Contact',
+            entityId: id,
+            description: `Deleted contact submission from: ${contact.name} (${contact.email})`,
+            metadata: { id, name: contact.name, email: contact.email, subject: contact.subject },
         });
 
         res.status(200).json({

@@ -1,6 +1,7 @@
 // Admin FAQs controller with CRUD operations
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create new FAQ
 const createFAQ = async (req, res, next) => {
@@ -33,6 +34,16 @@ const createFAQ = async (req, res, next) => {
                 category: category.trim(),
                 status: status || 'draft',
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'FAQs',
+            entity: 'FAQ',
+            entityId: faq.id,
+            description: `Created FAQ: "${faq.question}"`,
+            metadata: { question: faq.question, category: faq.category, status: faq.status },
         });
 
         res.status(201).json({
@@ -141,6 +152,16 @@ const updateFAQById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'FAQs',
+            entity: 'FAQ',
+            entityId: id,
+            description: `Updated FAQ: "${updatedFAQ.question}"`,
+            metadata: { question: updatedFAQ.question, category: updatedFAQ.category, status: updatedFAQ.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'FAQ updated successfully.',
@@ -168,6 +189,16 @@ const deleteFAQById = async (req, res, next) => {
         // Delete FAQ from database
         await prisma.FAQ.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'FAQs',
+            entity: 'FAQ',
+            entityId: id,
+            description: `Deleted FAQ: "${faq.question}"`,
+            metadata: { id, question: faq.question },
         });
 
         res.status(200).json({

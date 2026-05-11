@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Create new home record
@@ -32,6 +33,16 @@ const createHome = async (req, res, next) => {
                 statistics,
                 featuredProjects,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Home',
+            entity: 'Home',
+            entityId: home.id,
+            description: `Created home page record`,
+            metadata: { id: home.id },
         });
 
         res.status(201).json({
@@ -134,6 +145,16 @@ const updateHomeById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Home',
+            entity: 'Home',
+            entityId: id,
+            description: `Updated home page record`,
+            metadata: updateData,
+        });
+
         res.status(200).json({
             success: true,
             message: 'Home page updated successfully.',
@@ -185,6 +206,16 @@ const deleteHomeById = async (req, res, next) => {
         // Delete home record from database
         await prisma.home.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Home',
+            entity: 'Home',
+            entityId: id,
+            description: `Deleted home page record`,
+            metadata: { id },
         });
 
         res.status(200).json({

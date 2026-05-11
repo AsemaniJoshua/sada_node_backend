@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import nodemailer from 'nodemailer';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create nodemailer transporter for membership status emails
 const transporter = nodemailer.createTransport({
@@ -131,6 +132,16 @@ const createMembership = async (req, res, next) => {
             },
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Membership',
+            entity: 'Membership',
+            entityId: membership.id,
+            description: `Created membership record for: ${membership.firstName} ${membership.lastName}`,
+            metadata: { name: `${membership.firstName} ${membership.lastName}`, email: membership.email, status: membership.status },
+        });
+
         res.status(201).json({
             success: true,
             message: 'Membership record created successfully.',
@@ -255,6 +266,16 @@ const updateMembershipById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Membership',
+            entity: 'Membership',
+            entityId: id,
+            description: `Updated membership record for: ${updatedMembership.firstName} ${updatedMembership.lastName}`,
+            metadata: updateData,
+        });
+
         res.status(200).json({
             success: true,
             message: 'Membership record updated successfully.',
@@ -289,6 +310,16 @@ const deleteMembershipById = async (req, res, next) => {
         // Delete membership record
         await prisma.membership.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Membership',
+            entity: 'Membership',
+            entityId: id,
+            description: `Deleted membership record for: ${existingMembership.firstName} ${existingMembership.lastName}`,
+            metadata: { id, name: `${existingMembership.firstName} ${existingMembership.lastName}`, email: existingMembership.email },
         });
 
         res.status(200).json({
@@ -431,6 +462,16 @@ const approveMembership = async (req, res, next) => {
             if (error) {
                 console.error('Error sending approval email:', error);
             }
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'approve',
+            logType: 'Membership',
+            entity: 'Membership',
+            entityId: id,
+            description: `Approved membership for: ${existingMembership.firstName} ${existingMembership.lastName}`,
+            metadata: { name: `${existingMembership.firstName} ${existingMembership.lastName}`, email: existingMembership.email },
         });
 
         res.status(200).json({
@@ -583,6 +624,16 @@ const rejectMembership = async (req, res, next) => {
             if (error) {
                 console.error('Error sending rejection email:', error);
             }
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'reject',
+            logType: 'Membership',
+            entity: 'Membership',
+            entityId: id,
+            description: `Rejected membership for: ${existingMembership.firstName} ${existingMembership.lastName}`,
+            metadata: { name: `${existingMembership.firstName} ${existingMembership.lastName}`, email: existingMembership.email, reason },
         });
 
         res.status(200).json({

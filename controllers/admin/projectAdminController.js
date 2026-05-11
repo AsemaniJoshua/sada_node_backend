@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Create new project with images
@@ -94,6 +95,16 @@ const createProject = async (req, res, next) => {
                 end_date: endDate,
                 images: uploadedImages,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Projects',
+            entity: 'Project',
+            entityId: project.id,
+            description: `Created project: "${project.title}"`,
+            metadata: { title: project.title, category: project.category, status: project.status, budget: project.budget },
         });
 
         res.status(201).json({
@@ -307,6 +318,16 @@ const updateProjectById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Projects',
+            entity: 'Project',
+            entityId: id,
+            description: `Updated project: "${updatedProject.title}"`,
+            metadata: { title: updatedProject.title, status: updatedProject.status, category: updatedProject.category },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Project updated successfully.',
@@ -356,6 +377,16 @@ const deleteProjectById = async (req, res, next) => {
         // Delete project from database
         await prisma.project.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Projects',
+            entity: 'Project',
+            entityId: id,
+            description: `Deleted project: "${project.title}"`,
+            metadata: { id, title: project.title, category: project.category },
         });
 
         res.status(200).json({

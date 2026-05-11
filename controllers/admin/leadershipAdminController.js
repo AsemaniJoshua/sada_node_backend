@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 // Create new leadership profile
 const createLeadership = async (req, res, next) => {
@@ -61,6 +62,16 @@ const createLeadership = async (req, res, next) => {
                 social_media: social_media || null,
                 status: status || 'draft',
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'Leadership',
+            entity: 'Leadership',
+            entityId: leadershipProfile.id,
+            description: `Created leadership profile: ${leadershipProfile.name} (${leadershipProfile.role})`,
+            metadata: { name: leadershipProfile.name, role: leadershipProfile.role, status: leadershipProfile.status },
         });
 
         res.status(201).json({
@@ -211,6 +222,16 @@ const updateLeadershipById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Leadership',
+            entity: 'Leadership',
+            entityId: id,
+            description: `Updated leadership profile: ${updatedLeadershipProfile.name}`,
+            metadata: { name: updatedLeadershipProfile.name, role: updatedLeadershipProfile.role, status: updatedLeadershipProfile.status },
+        });
+
         res.status(200).json({
             success: true,
             message: 'Leadership profile updated successfully.',
@@ -243,6 +264,16 @@ const deleteLeadershipById = async (req, res, next) => {
         // Delete leadership profile from database
         await prisma.leadership.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'Leadership',
+            entity: 'Leadership',
+            entityId: id,
+            description: `Deleted leadership profile: ${leadershipProfile.name}`,
+            metadata: { id, name: leadershipProfile.name, role: leadershipProfile.role },
         });
 
         res.status(200).json({

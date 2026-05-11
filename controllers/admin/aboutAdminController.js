@@ -1,6 +1,7 @@
 // Admin about controller - CRUD operations for about page
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
+import { logActivity } from '../../utils/activity/logActivity.js';
 
 /**
  * Create new about record
@@ -32,6 +33,16 @@ const createAbout = async (req, res, next) => {
                 coreValues,
                 history,
             },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'create',
+            logType: 'About',
+            entity: 'About',
+            entityId: about.id,
+            description: `Created about page record`,
+            metadata: { id: about.id },
         });
 
         res.status(201).json({
@@ -132,6 +143,16 @@ const updateAboutById = async (req, res, next) => {
             data: updateData,
         });
 
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'About',
+            entity: 'About',
+            entityId: id,
+            description: `Updated about page record`,
+            metadata: updateData,
+        });
+
         res.status(200).json({
             success: true,
             message: 'About page updated successfully.',
@@ -166,6 +187,16 @@ const deleteAboutById = async (req, res, next) => {
         // Delete about record from database
         await prisma.about.delete({
             where: { id },
+        });
+
+        await logActivity({
+            userId: req.user.userId,
+            action: 'delete',
+            logType: 'About',
+            entity: 'About',
+            entityId: id,
+            description: `Deleted about page record`,
+            metadata: { id },
         });
 
         res.status(200).json({
