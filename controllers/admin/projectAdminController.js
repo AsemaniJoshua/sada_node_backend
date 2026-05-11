@@ -3,6 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { broadcastNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Create new project with images
@@ -106,6 +107,16 @@ const createProject = async (req, res, next) => {
             description: `Created project: "${project.title}"`,
             metadata: { title: project.title, category: project.category, status: project.status, budget: project.budget },
         });
+
+        // Send push notification
+        if (project.status === 'published') {
+            broadcastNotification({
+                title: 'New Project Launched!',
+                body: project.title,
+                url: `/projects/${project.id}`,
+                icon: project.images?.[0]?.url || null
+            });
+        }
 
         res.status(201).json({
             success: true,

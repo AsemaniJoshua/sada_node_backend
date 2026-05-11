@@ -65,3 +65,35 @@ export const broadcastNotification = async (payload) => {
         successful
     };
 };
+
+/**
+ * Send a notification ONLY to admins
+ * Used for: New Contact form, New Membership registration, etc.
+ */
+export const notifyAdmins = async (payload) => {
+    // Find all subscriptions belonging to users with the 'admin' role
+    const adminSubscriptions = await prisma.pushSubscription.findMany({
+        where: {
+            user: {
+                role: 'admin'
+            }
+        }
+    });
+
+    if (adminSubscriptions.length === 0) {
+        console.log('[PushService] No admin subscriptions found to notify.');
+        return { total: 0, successful: 0 };
+    }
+
+    console.log(`[PushService] Notifying ${adminSubscriptions.length} admins...`);
+    
+    const results = await Promise.allSettled(
+        adminSubscriptions.map(sub => sendNotification(sub, payload))
+    );
+    
+    const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    return {
+        total: adminSubscriptions.length,
+        successful
+    };
+};

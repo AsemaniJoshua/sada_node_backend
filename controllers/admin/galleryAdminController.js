@@ -3,6 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { broadcastNotification } from '../../utils/notifications/pushService.js';
 
 // Create new gallery entry with primary image and related images
 const createGallery = async (req, res, next) => {
@@ -64,6 +65,13 @@ const createGallery = async (req, res, next) => {
             entityId: gallery.id,
             description: `Created gallery entry: "${gallery.title}"`,
             metadata: { title: gallery.title, category: gallery.category },
+        });
+        // Send push notification
+        broadcastNotification({
+            title: 'New Gallery Photos!',
+            body: gallery.title,
+            url: `/gallery/${gallery.id}`,
+            icon: gallery.primaryImage || null
         });
 
         res.status(201).json({
