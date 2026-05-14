@@ -295,7 +295,7 @@ const forgotPassword = async (req, res, next) => {
         // Send OTP via email
         const mailOptions = {
             from: 'SADA <' + process.env.EMAIL_USER + '>',
-            to: `${email.trim()}`,
+            to: email.trim(),
             subject: 'Password Reset OTP - SADA',
             html: `
                 <!DOCTYPE html>
