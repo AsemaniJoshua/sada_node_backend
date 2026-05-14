@@ -3,6 +3,7 @@ import { prisma } from '../../config/config.js';
 import { AppError } from '../../utils/error/AppError.js';
 import { sendArkeselSMS } from '../../utils/sms/arkeselService.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { saveNotification } from '../../utils/notifications/pushService.js';
 
 // Setup Nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -114,6 +115,25 @@ export const sendSystemEmail = async (req, res, next) => {
             metadata: { target, subject, recipientCount: emails.length }
         });
 
+        // 1. Save to Communication History
+        await prisma.communicationLog.create({
+            data: {
+                type: 'email',
+                target,
+                recipientCount: emails.length,
+                subject,
+                message,
+                adminId: req.user.userId
+            }
+        });
+
+        // 2. Save to Notification Inbox (For Admins)
+        await saveNotification({
+            title: 'Bulk Email Sent',
+            body: `Admin sent email to ${description} (${emails.length} recipients)`,
+            userId: req.user.userId
+        });
+
         res.status(200).json({
             success: true,
             message: `Email successfully sent to ${emails.length} recipients.`,
@@ -153,6 +173,24 @@ export const sendSystemSMS = async (req, res, next) => {
                 entity: 'Communication',
                 description: `Sent bulk SMS to ${description}`,
                 metadata: { target, recipientCount: validPhones.length }
+            });
+
+            // 1. Save to Communication History
+            await prisma.communicationLog.create({
+                data: {
+                    type: 'sms',
+                    target,
+                    recipientCount: validPhones.length,
+                    message,
+                    adminId: req.user.userId
+                }
+            });
+
+            // 2. Save to Notification Inbox (For Admins)
+            await saveNotification({
+                title: 'Bulk SMS Sent',
+                body: `Admin sent SMS to ${description} (${validPhones.length} recipients)`,
+                userId: req.user.userId
             });
 
             res.status(200).json({

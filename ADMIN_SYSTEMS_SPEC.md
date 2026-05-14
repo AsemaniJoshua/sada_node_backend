@@ -53,18 +53,17 @@ Tracks all administrative mutations (Create, Update, Delete, Approve, Reject).
 ---
 
 ## 2. Bulk Communication System
-Allows admins to broadcast messages via Email and SMS.
+Allows admins to broadcast messages and track their history.
 
 ### Send System Email
 *   **Method:** `POST`
 *   **Endpoint:** `/api/admin/communication/email`
-*   **Auth:** Admin Token Required
 *   **Request Body:**
 ```json
 {
   "target": "all_approved", 
   "subject": "System Update",
-  "message": "Hello everyone, we have a new update regarding our next meeting."
+  "message": "Hello everyone, we have a new update..."
 }
 ```
 **Full Response Body:**
@@ -75,42 +74,95 @@ Allows admins to broadcast messages via Email and SMS.
 }
 ```
 
-### Send System SMS (Arkesel v2)
+### Send System SMS
 *   **Method:** `POST`
 *   **Endpoint:** `/api/admin/communication/sms`
-*   **Auth:** Admin Token Required
 *   **Request Body:**
 ```json
 {
-  "target": "specific_member",
-  "targetId": "member-uuid",
-  "message": "SADA: Your membership application has been approved. Welcome!"
+  "target": "all_approved",
+  "message": "SADA: Your application has been processed. Check your email."
 }
 ```
 **Full Response Body:**
 ```json
 {
   "success": true,
-  "message": "SMS successfully sent to 1 recipients.",
+  "message": "SMS successfully sent to 25 recipients.",
   "data": {
     "status": "success",
     "main_msg": "Message Sent Successfully",
-    "message_id": "987654321"
+    "message_id": "12345..."
   }
 }
 ```
 
-### Available Targets (`target` field):
-*   `all_approved`: Every member with "approved" status. (No `targetId` needed)
-*   `all_pending`: Every member with "pending" status. (No `targetId` needed)
-*   `all_admins`: Every system user with "admin" role. (No `targetId` needed)
-*   `specific_member`: Target a single member by their ID. (**Requires** `targetId`)
-*   `specific_admin`: Target a single admin user by their ID. (**Requires** `targetId`)
+### Get Communication History
+*   **Method:** `GET`
+*   **Endpoint:** `/api/admin/communication/history`
+*   **Query Params:** `page`, `limit`, `type` (email/sms)
+
+**Full Response Body:**
+```json
+{
+  "success": true,
+  "pagination": { "total": 10, "page": 1, "limit": 50, "totalPages": 1 },
+  "data": [
+    {
+      "id": "uuid",
+      "type": "email",
+      "target": "all_approved",
+      "recipientCount": 25,
+      "subject": "System Update",
+      "message": "Hello everyone...",
+      "adminId": "admin-uuid",
+      "createdAt": "2024-05-14T12:00:00Z",
+      "admin": {
+        "id": "admin-uuid",
+        "name": "Admin Name",
+        "email": "admin@sada.com"
+      }
+    }
+  ]
+}
+```
+
+### Get History Item by ID
+*   **Method:** `GET`
+*   **Endpoint:** `/api/admin/communication/history/:id`
+
+**Full Response Body:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "type": "sms",
+    "target": "specific_member",
+    "recipientCount": 1,
+    "message": "Your membership is approved",
+    "admin": { "name": "Admin Name", "email": "admin@sada.com" },
+    "createdAt": "2024-05-14T12:05:00Z"
+  }
+}
+```
+
+### Delete History Item
+*   **Method:** `DELETE`
+*   **Endpoint:** `/api/admin/communication/history/:id`
+
+**Full Response Body:**
+```json
+{
+  "success": true,
+  "message": "Communication history record deleted successfully"
+}
+```
 
 ---
 
 ## 3. Admin Notification Inbox
-A history of system alerts (e.g., new registrations, contact forms, and content deletions).
+A history of system alerts (e.g., new registrations, contact forms, deletions, and bulk messages sent).
 
 ### Get All Notifications
 *   **Method:** `GET`
@@ -128,30 +180,10 @@ A history of system alerts (e.g., new registrations, contact forms, and content 
       "title": "New Membership Application!",
       "body": "Joshua Asemani has applied.",
       "url": "/admin/membership/uuid",
-      "icon": null,
       "isRead": false,
       "createdAt": "2024-05-14T08:00:00Z"
     }
   ]
-}
-```
-
-### Get Single Notification
-*   **Method:** `GET`
-*   **Endpoint:** `/api/admin/notifications/:id`
-
-**Full Response Body:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "title": "New Contact Message!",
-    "body": "From: Jane Doe - Inquiry about events",
-    "url": "/admin/contact/uuid",
-    "isRead": true,
-    "createdAt": "2024-05-14T08:05:00Z"
-  }
 }
 ```
 
@@ -160,7 +192,7 @@ A history of system alerts (e.g., new registrations, contact forms, and content 
 *   **Mark as Unread:** `PATCH /api/admin/notifications/:id/unread`
 *   **Mark ALL as Read:** `PATCH /api/admin/notifications/mark-all-read`
 
-**Response Body (for all status updates):**
+**Full Response Body:**
 ```json
 {
   "success": true,
@@ -181,8 +213,8 @@ Endpoints to register browser push tokens.
 {
   "endpoint": "https://fcm.googleapis.com/...",
   "keys": {
-    "p256dh": "p256dh-key-string",
-    "auth": "auth-secret-string"
+    "p256dh": "key-string",
+    "auth": "auth-string"
   }
 }
 ```

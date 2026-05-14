@@ -29,6 +29,7 @@ model User {
   activities        UserActivity[]
   pushSubscriptions PushSubscription[]
   notifications     Notification[]
+  communicationLogs CommunicationLog[]
 }
 
 // PushSubscription model - stores browser push credentials
@@ -53,6 +54,24 @@ model Notification {
   userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+// CommunicationLog model - stores history of bulk emails and SMS sent
+model CommunicationLog {
+  id             String            @id @default(uuid())
+  type           CommunicationType
+  target         String            // e.g. "all_approved", "specific_member"
+  recipientCount Int
+  subject        String?           // For emails only
+  message        String            @db.LongText
+  adminId        String
+  admin          User              @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  createdAt      DateTime          @default(now())
+}
+
+enum CommunicationType {
+  email
+  sms
 }
 
 // UserActivity model - audit log for all admin mutations
