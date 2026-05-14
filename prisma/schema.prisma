@@ -4,8 +4,8 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider      = "prisma-client-js"
-  output        = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
   // binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -16,18 +16,19 @@ datasource db {
 
 // User model for authentication and authorization
 model User {
-  id              String            @id @default(uuid())
-  email           String            @unique
-  password        String
-  name            String
-  image           Json?
-  role            Role              @default(user)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  refreshTokens   RefreshToken[]
-  passwordResets  PasswordReset[]
-  activities      UserActivity[]
+  id                String             @id @default(uuid())
+  email             String             @unique
+  password          String
+  name              String
+  image             Json?
+  role              Role               @default(user)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  refreshTokens     RefreshToken[]
+  passwordResets    PasswordReset[]
+  activities        UserActivity[]
   pushSubscriptions PushSubscription[]
+  notifications     Notification[]
 }
 
 // PushSubscription model - stores browser push credentials
@@ -36,23 +37,36 @@ model PushSubscription {
   endpoint  String   @unique
   p256dh    String
   auth      String
-  userId    String?  
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// Notification model - stores administrative alerts/notifications
+model Notification {
+  id        String   @id @default(uuid())
+  title     String
+  body      String
+  url       String?
+  icon      String?
+  isRead    Boolean  @default(false)
+  userId    String?
   user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
 
 // UserActivity model - audit log for all admin mutations
 model UserActivity {
-  id          String            @id @default(uuid())
+  id          String          @id @default(uuid())
   userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   action      ActivityAction
   logType     ActivityLogType
-  entity      String            // e.g. "BlogPost", "Hero", "Membership"
-  entityId    String?           // ID of the affected record
-  description String            @db.LongText // Human-readable summary
-  metadata    Json?             // Optional extra context (title, name, status, etc.)
-  createdAt   DateTime          @default(now())
+  entity      String // e.g. "BlogPost", "Hero", "Membership"
+  entityId    String? // ID of the affected record
+  description String          @db.LongText // Human-readable summary
+  metadata    Json? // Optional extra context (title, name, status, etc.)
+  createdAt   DateTime        @default(now())
 }
 
 // RefreshToken model for token management
@@ -67,15 +81,15 @@ model RefreshToken {
 
 // PasswordReset model for OTP-based password reset
 model PasswordReset {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  otp       String
-  otpHash   String
-  isVerified Boolean @default(false)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otp        String
+  otpHash    String
+  isVerified Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 // Home model - Singleton page for statistics and featured projects
@@ -92,7 +106,7 @@ model Hero {
   id         String     @id @default(uuid())
   title      String
   subtitle   String
-  image      Json       // { url, public_id }
+  image      Json // { url, public_id }
   label      String
   target_url String
   status     HeroStatus @default(draft)
@@ -113,20 +127,20 @@ model About {
 
 // Membership model - Member registration and management
 model Membership {
-  id                    String               @id @default(uuid())
+  id                    String           @id @default(uuid())
   firstName             String
   lastName              String
-  dob                   String               // "1990-05-15" format
+  dob                   String // "1990-05-15" format
   age                   Int
   placeOfBirth          String
-  gender                String               // male, female, other
+  gender                String // male, female, other
   hometown              String
   currentAddress        String
   ethnicity             String
   suburb                String
   occupation            String
-  phone                 String               @unique
-  email                 String               @unique
+  phone                 String           @unique
+  email                 String           @unique
   fatherName            String
   fatherHometown        String
   fatherContact         String
@@ -137,12 +151,12 @@ model Membership {
   emergencyRelationship String
   emergencyOccupation   String
   emergencyContact      String
-  declaration           Boolean              @default(true)
-  status                MembershipStatus     @default(pending)
-  notes                 String?              @db.LongText // Private notes for admin only
+  declaration           Boolean          @default(true)
+  status                MembershipStatus @default(pending)
+  notes                 String?          @db.LongText // Private notes for admin only
   payments              Payment[]
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 }
 
 // Enum for membership status
@@ -159,40 +173,40 @@ model Project {
   description String        @db.LongText
   budget      Float
   category    String
-  progress    Int           // percentage 0-100
+  progress    Int // percentage 0-100
   status      ProjectStatus @default(planned)
   isFeatured  Boolean       @default(false)
   start_date  DateTime
   end_date    DateTime?
-  images      Json          // [{ url, public_id }]
+  images      Json // [{ url, public_id }]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 }
 
 // BlogPost model - Blog articles with content and images
 model BlogPost {
-  id        String            @id @default(uuid())
+  id        String           @id @default(uuid())
   title     String
-  content   String            @db.LongText
+  content   String           @db.LongText
   category  BlogPostCategory
-  status    BlogPostStatus    @default(draft)
-  tags      Json              // ["tag1", "tag2"]
-  images    Json              // [{ url, public_id }]
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  status    BlogPostStatus   @default(draft)
+  tags      Json // ["tag1", "tag2"]
+  images    Json // [{ url, public_id }]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
 }
 
 // Gallery model - Photo gallery with multiple images per entry
 model Gallery {
-  id              String    @id @default(uuid())
-  title           String
-  description     String    @db.LongText
-  primary_image   Json      // { url, public_id }
-  event_date      DateTime
-  category        String
-  images          Json      // [{ url, public_id }] - related photos
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id            String   @id @default(uuid())
+  title         String
+  description   String   @db.LongText
+  primary_image Json // { url, public_id }
+  event_date    DateTime
+  category      String
+  images        Json // [{ url, public_id }] - related photos
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }
 
 // Contact model - Form submissions from website visitors (append-only)
@@ -209,15 +223,15 @@ model Contact {
 
 // Testimonial model - Customer/user testimonials with image
 model Testimonial {
-  id        String               @id @default(uuid())
+  id        String            @id @default(uuid())
   name      String
   role      String
-  text      String               @db.LongText
-  image     Json                 // { url, public_id }
-  ratings   Int                 // 1-5 rating scale
-  status    TestimonialStatus    @default(draft)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+  text      String            @db.LongText
+  image     Json // { url, public_id }
+  ratings   Int // 1-5 rating scale
+  status    TestimonialStatus @default(draft)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 }
 
 // FAQ model - Frequently asked questions
@@ -245,63 +259,63 @@ model Journey {
 
 // Announcement model - News feed/announcements
 model Announcement {
-  id           String                    @id @default(uuid())
-  title        String
-  content      String                    @db.LongText
-  priority     AnnouncementPriority      @default(low)
-  status       AnnouncementStatus        @default(draft)
-  start_date   DateTime
-  expiry_date  DateTime
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @updatedAt
+  id          String               @id @default(uuid())
+  title       String
+  content     String               @db.LongText
+  priority    AnnouncementPriority @default(low)
+  status      AnnouncementStatus   @default(draft)
+  start_date  DateTime
+  expiry_date DateTime
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 }
 
 model Leadership {
-  id          String            @id @default(uuid())
-  name        String
-  role        String
-  email       String            @unique
-  bio         String            @db.LongText
-  image       Json
-  start_year  String
-  end_year    String?
-  social_media Json?             // { linkedin, twitter, instagram, etc. }
-  status      LeadershipStatus  @default(draft)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id           String           @id @default(uuid())
+  name         String
+  role         String
+  email        String           @unique
+  bio          String           @db.LongText
+  image        Json
+  start_year   String
+  end_year     String?
+  social_media Json? // { linkedin, twitter, instagram, etc. }
+  status       LeadershipStatus @default(draft)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 }
 
 // Event model - Events with date, time and status management
 model Event {
-  id              String      @id @default(uuid())
-  title           String
-  event_type      String
-  location        String
-  description     String      @db.LongText
-  event_banner    Json        // { url, public_id }
-  start_date      DateTime
-  start_time      String      // Format: HH:MM (24-hour)
-  status          EventStatus @default(draft)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id           String      @id @default(uuid())
+  title        String
+  event_type   String
+  location     String
+  description  String      @db.LongText
+  event_banner Json // { url, public_id }
+  start_date   DateTime
+  start_time   String // Format: HH:MM (24-hour)
+  status       EventStatus @default(draft)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }
 
 model Payment {
-  id                  String              @id @default(uuid())
-  membership          Membership          @relation(fields: [memberId], references: [id], onDelete: Cascade)
-  memberId            String
-  full_name           String
-  email               String
-  membership_role     MembershipRole
-  month_paid_for      Int                 // 1-12
-  year_paid_for       Int
-  amount              Decimal             @db.Decimal(10, 2)
-  amountWithFee       Decimal             @db.Decimal(10, 2)
-  payment_method      String?
-  status              PaymentStatus       @default(pending)
-  reference           String              @unique
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  id              String         @id @default(uuid())
+  membership      Membership     @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId        String
+  full_name       String
+  email           String
+  membership_role MembershipRole
+  month_paid_for  Int // 1-12
+  year_paid_for   Int
+  amount          Decimal        @db.Decimal(10, 2)
+  amountWithFee   Decimal        @db.Decimal(10, 2)
+  payment_method  String?
+  status          PaymentStatus  @default(pending)
+  reference       String         @unique
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }
 
 // Enum for membership role

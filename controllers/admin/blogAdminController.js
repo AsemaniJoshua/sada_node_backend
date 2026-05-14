@@ -3,7 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
-import { broadcastNotification } from '../../utils/notifications/pushService.js';
+import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Create new blog post with optional images and tags
@@ -363,6 +363,12 @@ const deleteBlogPostById = async (req, res, next) => {
             entityId: id,
             description: `Deleted blog post: "${blogPost.title}"`,
             metadata: { id, title: blogPost.title },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Blog Post Deleted',
+            body: `Blog post "${blogPost.title}" was deleted.`,
         });
 
         res.status(200).json({

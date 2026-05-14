@@ -39,6 +39,7 @@ import adminEventsRouter from "./routers/admin/events.js";
 import adminUserRouter from "./routers/admin/user.js";
 import adminActivityRouter from "./routers/admin/activity.js";
 import adminCommunicationRouter from "./routers/admin/communication.js";
+import adminNotificationRouter from "./routers/admin/notifications.js";
 
 
 // Initializing the express application
@@ -100,6 +101,7 @@ app.use('/api/admin/events', adminEventsRouter);
 app.use('/api/admin/user', adminUserRouter);
 app.use('/api/admin/activity', adminActivityRouter);
 app.use('/api/admin/communication', adminCommunicationRouter);
+app.use('/api/admin/notifications', adminNotificationRouter);
 
 
 

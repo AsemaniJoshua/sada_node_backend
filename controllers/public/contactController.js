@@ -2,7 +2,7 @@
 import nodemailer from 'nodemailer';
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
-import { notifyAdmins } from '../../utils/notifications/pushService.js';
+import { notifyAdmins, saveNotification } from '../../utils/notifications/pushService.js';
 
 // Create nodemailer transporter
 const transporter = nodemailer.createTransport({
@@ -206,11 +206,13 @@ const createContact = async (req, res, next) => {
         });
 
         // Send push notification to admins
-        notifyAdmins({
+        const notificationPayload = {
             title: 'New Contact Message!',
             body: `From: ${contact.name} - ${contact.subject}`,
             url: `/admin/contact/${contact.id}`
-        });
+        };
+
+        notifyAdmins(notificationPayload);
 
         res.status(201).json({
             success: true,

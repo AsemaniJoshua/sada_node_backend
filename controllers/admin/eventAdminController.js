@@ -3,7 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
-import { broadcastNotification } from '../../utils/notifications/pushService.js';
+import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Create new event with banner image
@@ -325,6 +325,12 @@ const deleteEventById = async (req, res, next) => {
             entityId: id,
             description: `Deleted event: "${event.title}"`,
             metadata: { id, title: event.title, event_type: event.event_type },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Event Deleted',
+            body: `Event "${event.title}" was deleted.`,
         });
 
         res.status(200).json({

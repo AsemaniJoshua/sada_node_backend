@@ -2,7 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import nodemailer from 'nodemailer';
-import { notifyAdmins } from '../../utils/notifications/pushService.js';
+import { notifyAdmins, saveNotification } from '../../utils/notifications/pushService.js';
 
 // Create nodemailer transporter for membership confirmation emails
 const transporter = nodemailer.createTransport({
@@ -256,11 +256,13 @@ const registerMember = async (req, res, next) => {
         });
 
         // Send push notification to admins
-        notifyAdmins({
+        const notificationPayload = {
             title: 'New Membership Application!',
             body: `${membership.firstName} ${membership.lastName} has applied.`,
             url: `/admin/membership/${membership.id}`
-        });
+        };
+
+        notifyAdmins(notificationPayload);
 
         res.status(201).json({
             success: true,

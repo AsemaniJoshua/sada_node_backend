@@ -60,6 +60,9 @@ export const broadcastNotification = async (payload) => {
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     console.log(`[PushService] Broadcast complete. Success: ${successful}/${subscriptions.length}`);
     
+    // Auto-save to database history
+    await saveNotification(payload);
+
     return {
         total: subscriptions.length,
         successful
@@ -92,8 +95,33 @@ export const notifyAdmins = async (payload) => {
     );
     
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
+    
+    // Auto-save to database history
+    await saveNotification(payload);
+
     return {
         total: adminSubscriptions.length,
         successful
     };
+};
+
+/**
+ * Helper to save notification to database for Admin Inbox
+ */
+export const saveNotification = async (payload) => {
+    try {
+        const notification = await prisma.notification.create({
+            data: {
+                title: payload.title,
+                body: payload.body,
+                url: payload.url || null,
+                icon: payload.icon || null,
+                userId: payload.userId || null
+            }
+        });
+        return notification;
+    } catch (error) {
+        console.error('[PushService] Error saving notification:', error.message);
+        return null;
+    }
 };

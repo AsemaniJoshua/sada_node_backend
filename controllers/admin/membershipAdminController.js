@@ -3,6 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import nodemailer from 'nodemailer';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { saveNotification } from '../../utils/notifications/pushService.js';
 
 // Create nodemailer transporter for membership status emails
 const transporter = nodemailer.createTransport({
@@ -322,6 +323,12 @@ const deleteMembershipById = async (req, res, next) => {
             metadata: { id, name: `${existingMembership.firstName} ${existingMembership.lastName}`, email: existingMembership.email },
         });
 
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Membership Deleted',
+            body: `Admin deleted membership record for ${existingMembership.firstName} ${existingMembership.lastName}.`,
+        });
+
         res.status(200).json({
             success: true,
             message: 'Membership record deleted successfully.',
@@ -472,6 +479,13 @@ const approveMembership = async (req, res, next) => {
             entityId: id,
             description: `Approved membership for: ${existingMembership.firstName} ${existingMembership.lastName}`,
             metadata: { name: `${existingMembership.firstName} ${existingMembership.lastName}`, email: existingMembership.email },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Membership Approved',
+            body: `Admin approved ${existingMembership.firstName} ${existingMembership.lastName}'s membership.`,
+            url: `/admin/membership/${id}`
         });
 
         res.status(200).json({
@@ -634,6 +648,13 @@ const rejectMembership = async (req, res, next) => {
             entityId: id,
             description: `Rejected membership for: ${existingMembership.firstName} ${existingMembership.lastName}`,
             metadata: { name: `${existingMembership.firstName} ${existingMembership.lastName}`, email: existingMembership.email, reason },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Membership Rejected',
+            body: `Admin rejected ${existingMembership.firstName} ${existingMembership.lastName}'s membership.`,
+            url: `/admin/membership/${id}`
         });
 
         res.status(200).json({

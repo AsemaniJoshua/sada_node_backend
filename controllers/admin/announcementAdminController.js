@@ -2,7 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
-import { broadcastNotification } from '../../utils/notifications/pushService.js';
+import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
 // Create new announcement
 const createAnnouncement = async (req, res, next) => {
@@ -305,6 +305,12 @@ const deleteAnnouncementById = async (req, res, next) => {
             entityId: id,
             description: `Deleted announcement: "${announcement.title}"`,
             metadata: { id, title: announcement.title },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Announcement Deleted',
+            body: `Announcement "${announcement.title}" was deleted.`,
         });
 
         res.status(200).json({
