@@ -157,14 +157,28 @@ const getAllProjects = async (req, res, next) => {
             where.isFeatured = isFeatured === 'true' || isFeatured === true;
         }
 
-        // Fetch all projects ordered by latest first
-        const projects = await prisma.project.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-        });
+        // Fetch all projects ordered by latest first with pagination
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [projects, total] = await Promise.all([
+            prisma.project.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.project.count({ where })
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: projects,
         });
     } catch (error) {

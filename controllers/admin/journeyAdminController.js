@@ -64,14 +64,28 @@ const createJourney = async (req, res, next) => {
 // Get all journey milestones (admin view)
 const getAllJourneys = async (req, res, next) => {
     try {
-        const journeys = await prisma.journey.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [journeys, total] = await Promise.all([
+            prisma.journey.findMany({
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.journey.count()
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: journeys,
         });
     } catch (error) {

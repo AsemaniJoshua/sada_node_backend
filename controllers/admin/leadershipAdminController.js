@@ -87,14 +87,28 @@ const createLeadership = async (req, res, next) => {
 // Get all leadership profiles (admin view)
 const getAllLeadership = async (req, res, next) => {
     try {
-        const leadership = await prisma.leadership.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [leadership, total] = await Promise.all([
+            prisma.leadership.findMany({
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.leadership.count()
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: leadership,
         });
     } catch (error) {

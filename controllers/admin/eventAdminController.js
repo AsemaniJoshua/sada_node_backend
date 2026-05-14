@@ -119,14 +119,28 @@ const getAllEvents = async (req, res, next) => {
             where.event_type = event_type;
         }
 
-        // Fetch all events ordered by start_date ascending (earliest first)
-        const events = await prisma.event.findMany({
-            where,
-            orderBy: { start_date: 'asc' },
-        });
+        // Fetch all events ordered by start_date ascending (earliest first) with pagination
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [events, total] = await Promise.all([
+            prisma.event.findMany({
+                where,
+                orderBy: { start_date: 'asc' },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.event.count({ where })
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: events,
         });
     } catch (error) {

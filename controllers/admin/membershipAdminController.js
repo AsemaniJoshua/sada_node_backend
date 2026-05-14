@@ -158,12 +158,32 @@ const createMembership = async (req, res, next) => {
  */
 const getAllMemberships = async (req, res, next) => {
     try {
-        const memberships = await prisma.membership.findMany({
-            orderBy: { createdAt: 'desc' },
-        });
+        const { page = 1, limit = 50, status } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const where = {};
+        if (status) {
+            where.status = status;
+        }
+
+        const [memberships, total] = await Promise.all([
+            prisma.membership.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.membership.count({ where })
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: memberships,
         });
     } catch (error) {

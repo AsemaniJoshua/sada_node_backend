@@ -80,14 +80,28 @@ const createTestimonial = async (req, res, next) => {
 // Get all testimonials (admin view)
 const getAllTestimonials = async (req, res, next) => {
     try {
-        const testimonials = await prisma.testimonial.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [testimonials, total] = await Promise.all([
+            prisma.testimonial.findMany({
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.testimonial.count()
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: testimonials,
         });
     } catch (error) {

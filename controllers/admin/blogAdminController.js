@@ -135,25 +135,38 @@ const getAllBlogPosts = async (req, res, next) => {
             where.status = status;
         }
 
-        // Fetch all blog posts ordered by latest first
-        let blogPosts = await prisma.blogPost.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-        });
-
-        // Filter by tag if provided (JSON array contains)
         if (tag) {
-            blogPosts = blogPosts.filter(post => 
-                Array.isArray(post.tags) && post.tags.includes(tag)
-            );
+            where.tags = {
+                array_contains: tag
+            };
         }
+
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        // Fetch all blog posts ordered by latest first with pagination
+        const [blogPosts, total] = await Promise.all([
+            prisma.blogPost.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.blogPost.count({ where })
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: blogPosts,
         });
     } catch (error) {
-        next(new AppError(error.message, 500, true));
+        next(error);
     }
 };
 

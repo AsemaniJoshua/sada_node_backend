@@ -132,15 +132,29 @@ const getAllAnnouncements = async (req, res, next) => {
             }
         }
 
-        const announcements = await prisma.announcement.findMany({
-            where,
-            orderBy: {
-                start_date: 'desc',
-            },
-        });
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [announcements, total] = await Promise.all([
+            prisma.announcement.findMany({
+                where,
+                orderBy: {
+                    start_date: 'desc',
+                },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.announcement.count({ where })
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: announcements,
         });
     } catch (error) {

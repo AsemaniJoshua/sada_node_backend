@@ -135,23 +135,38 @@ const updateProfile = async (req, res, next) => {
  */
 const getAllUsers = async (req, res, next) => {
     try {
-        const users = await prisma.user.findMany({
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                image: true,
-                role: true,
-                createdAt: true,
-                updatedAt: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [users, total] = await Promise.all([
+            prisma.user.findMany({
+                select: {
+                    id: true,
+                    email: true,
+                    name: true,
+                    image: true,
+                    role: true,
+                    isFirstTimeLogin: true,
+                    createdAt: true,
+                    updatedAt: true,
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.user.count()
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: users,
         });
     } catch (error) {

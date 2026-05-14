@@ -59,14 +59,28 @@ const createFAQ = async (req, res, next) => {
 // Get all FAQs (admin view)
 const getAllFAQs = async (req, res, next) => {
     try {
-        const faqs = await prisma.FAQ.findMany({
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        const { page = 1, limit = 50 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+
+        const [faqs, total] = await Promise.all([
+            prisma.FAQ.findMany({
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: parseInt(limit),
+            }),
+            prisma.FAQ.count()
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page: parseInt(page),
+                limit: parseInt(limit),
+                totalPages: Math.ceil(total / parseInt(limit))
+            },
             data: faqs,
         });
     } catch (error) {

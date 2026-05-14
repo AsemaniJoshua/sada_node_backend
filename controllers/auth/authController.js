@@ -144,6 +144,7 @@ const login = async (req, res, next) => {
                     email: user.email,
                     name: user.name,
                     role: user.role,
+                    isFirstTimeLogin: user.isFirstTimeLogin,
                 },
             },
         });
@@ -598,6 +599,27 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
+/**
+ * Complete first-time login (set flag to false)
+ */
+const completeFirstTimeLogin = async (req, res, next) => {
+    try {
+        const userId = req.user.userId;
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { isFirstTimeLogin: false }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'First-time login status updated successfully.'
+        });
+    } catch (error) {
+        next(new AppError(error.message, 500, true));
+    }
+};
+
 export {
     register,
     login,
@@ -606,4 +628,5 @@ export {
     forgotPassword,
     verifyOtp,
     resetPassword,
+    completeFirstTimeLogin,
 };
