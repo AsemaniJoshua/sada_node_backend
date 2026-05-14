@@ -1,50 +1,59 @@
-# SADA Admin Systems - Frontend Integration Spec
+# SADA Admin Systems - Full Technical Specification
 
-This document provides the full technical specification for the Admin Activity Logs, Bulk Communications, and the Admin Notification Inbox.
+This document contains the complete technical specification for administrative integration. Every endpoint follows a consistent structure with standard pagination and error handling.
 
 ---
 
-## 1. Admin Activity Logs
-Tracks all administrative mutations (Create, Update, Delete, Approve, Reject).
+## 1. Authentication & Profile Management
+
+### Complete First-Time Login
+Marks the admin's initial setup (e.g., password change) as complete.
+*   **Request Method:** `PATCH`
+*   **Endpoint:** `/api/auth/complete-first-time-login`
+*   **Auth:** Admin Token Required
+*   **Request Body:** `None`
+
+**Full Response Body:**
+```json
+{
+  "success": true,
+  "message": "First-time login status updated successfully."
+}
+```
+
+---
+
+## 2. Admin Activity Logs (Audit Trail)
+Tracks every administrative action for accountability.
 
 ### Get All Activities
-*   **Method:** `GET`
+*   **Request Method:** `GET`
 *   **Endpoint:** `/api/admin/activity`
+*   **Query Params:** `page`, `limit`, `action` (create/update/delete/approve/reject), `logType`
 *   **Auth:** Admin Token Required
-*   **Query Parameters:**
-    *   `page`: (Optional) Page number (default: 1)
-    *   `limit`: (Optional) Records per page (default: 50)
-    *   `action`: (Optional) Filter by `create` | `update` | `delete` | `approve` | `reject`
-    *   `logType`: (Optional) Filter by category (e.g., `Blog`, `Events`, `Membership`)
 
 **Full Response Body:**
 ```json
 {
   "success": true,
   "pagination": {
-    "total": 120,
+    "total": 1250,
     "page": 1,
     "limit": 50,
-    "totalPages": 3
+    "totalPages": 25
   },
   "data": [
     {
-      "id": "uuid-string",
-      "userId": "admin-uuid",
-      "action": "create",
+      "id": "uuid",
+      "action": "delete",
       "logType": "Blog",
       "entity": "BlogPost",
-      "entityId": "post-uuid",
-      "description": "Created blog post: My Summer Trip",
-      "metadata": { "title": "My Summer Trip", "status": "published" },
-      "createdAt": "2024-05-11T10:00:00Z",
+      "description": "Deleted blog post: Summer Gala",
       "admin": {
-        "id": "admin-uuid",
-        "name": "John Doe",
-        "email": "admin@sada.com",
-        "role": "admin",
-        "image": null
-      }
+        "name": "Super Admin",
+        "email": "admin@sada.com"
+      },
+      "createdAt": "2024-05-14T10:00:00Z"
     }
   ]
 }
@@ -52,53 +61,61 @@ Tracks all administrative mutations (Create, Update, Delete, Approve, Reject).
 
 ---
 
-## 2. Bulk Communication System
-Allows admins to broadcast messages and track their history.
+## 3. Bulk Communication Suite
+Direct broadcasting to segments via Email and SMS.
 
-### Send System Email
-*   **Method:** `POST`
+### Target Options (Valid for both Email & SMS):
+*   `all_approved`: All members with "approved" status.
+*   `all_pending`: All members awaiting approval.
+*   `all_admins`: All system administrators.
+*   `specific_member`: Requires `targetId` (Membership ID).
+*   `specific_admin`: Requires `targetId` (User ID).
+
+### Send Bulk Email
+*   **Request Method:** `POST`
 *   **Endpoint:** `/api/admin/communication/email`
 *   **Request Body:**
 ```json
 {
-  "target": "all_approved", 
-  "subject": "System Update",
-  "message": "Hello everyone, we have a new update..."
+  "target": "all_approved",
+  "subject": "Important Meeting Notice",
+  "message": "Dear members, please join us this Sunday..."
 }
 ```
 **Full Response Body:**
 ```json
 {
   "success": true,
-  "message": "Email successfully sent to 25 recipients."
+  "message": "Email successfully sent to 45 recipients."
 }
 ```
 
-### Send System SMS
-*   **Method:** `POST`
+### Send Bulk SMS
+*   **Request Method:** `POST`
 *   **Endpoint:** `/api/admin/communication/sms`
 *   **Request Body:**
 ```json
 {
-  "target": "all_approved",
-  "message": "SADA: Your application has been processed. Check your email."
+  "target": "all_pending",
+  "message": "SADA: Your application is being reviewed. Check your email for updates."
 }
 ```
 **Full Response Body:**
 ```json
 {
   "success": true,
-  "message": "SMS successfully sent to 25 recipients.",
-  "data": {
-    "status": "success",
-    "main_msg": "Message Sent Successfully",
-    "message_id": "12345..."
-  }
+  "message": "SMS successfully sent to 12 recipients.",
+  "data": { "status": "success", "message_id": "9988..." }
 }
 ```
 
+---
+
+## 4. Communication History
+Audit logs for every broadcast message sent.
+
 ### Get Communication History
-*   **Method:** `GET`
+*   **Request Method:** `GET`
 *   **Endpoint:** `/api/admin/communication/history`
 *   **Query Params:** `page`, `limit`, `type` (email/sms)
 
@@ -106,66 +123,29 @@ Allows admins to broadcast messages and track their history.
 ```json
 {
   "success": true,
-  "pagination": { "total": 10, "page": 1, "limit": 50, "totalPages": 1 },
+  "pagination": { "total": 20, "page": 1, "limit": 50, "totalPages": 1 },
   "data": [
     {
       "id": "uuid",
       "type": "email",
       "target": "all_approved",
-      "recipientCount": 25,
-      "subject": "System Update",
-      "message": "Hello everyone...",
-      "adminId": "admin-uuid",
-      "createdAt": "2024-05-14T12:00:00Z",
-      "admin": {
-        "id": "admin-uuid",
-        "name": "Admin Name",
-        "email": "admin@sada.com"
-      }
+      "recipientCount": 45,
+      "subject": "Meeting Notice",
+      "message": "Dear members...",
+      "admin": { "name": "Admin User" },
+      "createdAt": "2024-05-14T11:00:00Z"
     }
   ]
 }
 ```
 
-### Get History Item by ID
-*   **Method:** `GET`
-*   **Endpoint:** `/api/admin/communication/history/:id`
-
-**Full Response Body:**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "uuid",
-    "type": "sms",
-    "target": "specific_member",
-    "recipientCount": 1,
-    "message": "Your membership is approved",
-    "admin": { "name": "Admin Name", "email": "admin@sada.com" },
-    "createdAt": "2024-05-14T12:05:00Z"
-  }
-}
-```
-
-### Delete History Item
-*   **Method:** `DELETE`
-*   **Endpoint:** `/api/admin/communication/history/:id`
-
-**Full Response Body:**
-```json
-{
-  "success": true,
-  "message": "Communication history record deleted successfully"
-}
-```
-
 ---
 
-## 3. Admin Notification Inbox
-A history of system alerts (e.g., new registrations, contact forms, deletions, and bulk messages sent).
+## 5. Admin Notification Inbox
+Real-time alerts for system events and critical deletions.
 
 ### Get All Notifications
-*   **Method:** `GET`
+*   **Request Method:** `GET`
 *   **Endpoint:** `/api/admin/notifications`
 *   **Query Params:** `page`, `limit`, `isRead` (true/false)
 
@@ -178,50 +158,65 @@ A history of system alerts (e.g., new registrations, contact forms, deletions, a
     {
       "id": "uuid",
       "title": "New Membership Application!",
-      "body": "Joshua Asemani has applied.",
+      "body": "Ama Serwaa has applied.",
       "url": "/admin/membership/uuid",
       "isRead": false,
-      "createdAt": "2024-05-14T08:00:00Z"
+      "createdAt": "2024-05-14T12:00:00Z"
     }
   ]
 }
 ```
 
-### Status Management
-*   **Mark as Read:** `PATCH /api/admin/notifications/:id/read`
-*   **Mark as Unread:** `PATCH /api/admin/notifications/:id/unread`
-*   **Mark ALL as Read:** `PATCH /api/admin/notifications/mark-all-read`
+### Mark All as Read
+*   **Request Method:** `PATCH`
+*   **Endpoint:** `/api/admin/notifications/mark-all-read`
 
 **Full Response Body:**
 ```json
 {
   "success": true,
-  "message": "Notification status updated successfully"
+  "message": "All notifications marked as read"
 }
 ```
 
 ---
 
-## 4. Web Push Registration
-Endpoints to register browser push tokens.
+## 6. General Data Management (Paginated)
+Standard format for all data list endpoints.
 
-### Subscribe (Opt-in)
-*   **Method:** `POST`
-*   **Endpoint:** `/api/notifications/subscribe`
-*   **Request Body:**
-```json
-{
-  "endpoint": "https://fcm.googleapis.com/...",
-  "keys": {
-    "p256dh": "key-string",
-    "auth": "auth-string"
-  }
-}
-```
+### Get All Memberships
+*   **Request Method:** `GET`
+*   **Endpoint:** `/api/admin/memberships`
+*   **Query Params:** `page`, `limit`, `status` (pending/approved/rejected)
+
 **Full Response Body:**
 ```json
 {
   "success": true,
-  "message": "Successfully subscribed to push notifications"
+  "pagination": {
+    "total": 500,
+    "page": 1,
+    "limit": 50,
+    "totalPages": 10
+  },
+  "data": [
+    { "id": "uuid", "firstName": "Joshua", "status": "approved", "createdAt": "..." }
+  ]
+}
+```
+
+### Get All Blog Posts
+*   **Request Method:** `GET`
+*   **Endpoint:** `/api/admin/blogs`
+*   **Query Params:** `page`, `limit`, `category`, `status`, `tag`
+
+**Full Response Body:**
+```json
+{
+  "success": true,
+  "pagination": { "total": 80, "page": 1, "limit": 50, "totalPages": 2 },
+  "data": [
+    { "id": "uuid", "title": "Summer Gala", "status": "published" }
+  ]
 }
 ```
