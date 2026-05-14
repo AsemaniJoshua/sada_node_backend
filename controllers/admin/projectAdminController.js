@@ -3,7 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
-import { broadcastNotification } from '../../utils/notifications/pushService.js';
+import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Create new project with images
@@ -110,12 +110,14 @@ const createProject = async (req, res, next) => {
 
         // Send push notification
         if (project.status === 'published') {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Project Launched!',
                 body: project.title,
                 url: `/projects/${project.id}`,
                 icon: project.images?.[0]?.url || null
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(201).json({
@@ -398,6 +400,12 @@ const deleteProjectById = async (req, res, next) => {
             entityId: id,
             description: `Deleted project: "${project.title}"`,
             metadata: { id, title: project.title, category: project.category },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Project Deleted',
+            body: `Admin deleted project: "${project.title}"`,
         });
 
         res.status(200).json({

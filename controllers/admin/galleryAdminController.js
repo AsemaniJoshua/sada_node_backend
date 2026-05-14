@@ -3,7 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
-import { broadcastNotification } from '../../utils/notifications/pushService.js';
+import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
 // Create new gallery entry with primary image and related images
 const createGallery = async (req, res, next) => {
@@ -67,12 +67,14 @@ const createGallery = async (req, res, next) => {
             metadata: { title: gallery.title, category: gallery.category },
         });
         // Send push notification
-        broadcastNotification({
+        const notificationPayload = {
             title: 'New Gallery Photos!',
             body: gallery.title,
             url: `/gallery/${gallery.id}`,
             icon: gallery.primaryImage || null
-        });
+        };
+        broadcastNotification(notificationPayload);
+        saveNotification(notificationPayload);
 
         res.status(201).json({
             success: true,
@@ -268,6 +270,12 @@ const deleteGalleryById = async (req, res, next) => {
             entityId: id,
             description: `Deleted gallery entry: "${gallery.title}"`,
             metadata: { id, title: gallery.title, category: gallery.category },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Gallery Entry Deleted',
+            body: `Admin deleted gallery item: "${gallery.title}"`,
         });
 
         res.status(200).json({

@@ -4,6 +4,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { saveNotification } from '../../utils/notifications/pushService.js';
 
 /**
  * Update current admin profile
@@ -420,6 +421,12 @@ const deleteUserById = async (req, res, next) => {
             entityId: id,
             description: `Deleted user: ${user.name} (${user.email})`,
             metadata: { id, name: user.name, email: user.email, role: user.role },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'User Account Deleted',
+            body: `Admin deleted ${user.role} account: ${user.name}`,
         });
 
         res.status(200).json({

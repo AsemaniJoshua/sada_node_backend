@@ -263,6 +263,7 @@ const registerMember = async (req, res, next) => {
         };
 
         notifyAdmins(notificationPayload);
+        saveNotification(notificationPayload);
 
         res.status(201).json({
             success: true,

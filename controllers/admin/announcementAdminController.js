@@ -72,11 +72,13 @@ const createAnnouncement = async (req, res, next) => {
 
         // Send push notification
         if (announcement.status === 'published') {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Announcement!',
                 body: announcement.title,
                 url: `/announcements/${announcement.id}`
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(201).json({
@@ -261,11 +263,13 @@ const updateAnnouncementById = async (req, res, next) => {
 
         // Smart Notification: Only notify if it was NOT published before, but is NOW published
         if (existingAnnouncement.status !== 'published' && updatedAnnouncement.status === 'published') {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Announcement!',
                 body: updatedAnnouncement.title,
                 url: `/announcements/${updatedAnnouncement.id}`
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(200).json({

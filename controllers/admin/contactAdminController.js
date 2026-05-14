@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { saveNotification } from '../../utils/notifications/pushService.js';
 
 // Get all contact submissions
 const getAllContacts = async (req, res, next) => {
@@ -70,6 +71,12 @@ const deleteContactById = async (req, res, next) => {
             entityId: id,
             description: `Deleted contact submission from: ${contact.name} (${contact.email})`,
             metadata: { id, name: contact.name, email: contact.email, subject: contact.subject },
+        });
+
+        // Save notification for history (Admin Inbox)
+        saveNotification({
+            title: 'Contact Message Deleted',
+            body: `Admin deleted contact message from: ${contact.name}`,
         });
 
         res.status(200).json({

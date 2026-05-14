@@ -76,12 +76,14 @@ const createEvent = async (req, res, next) => {
 
         // Send push notification
         if (['upcoming', 'live'].includes(event.status)) {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Event Scheduled!',
                 body: `${event.title} - ${event.location}`,
                 url: `/events/${event.id}`,
                 icon: event.event_banner?.url || null
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(201).json({
@@ -263,12 +265,14 @@ const updateEventById = async (req, res, next) => {
         const isVisible = ['upcoming', 'live'].includes(updatedEvent.status);
 
         if (!wasVisible && isVisible) {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Event Scheduled!',
                 body: `${updatedEvent.title} - ${updatedEvent.location}`,
                 url: `/events/${updatedEvent.id}`,
                 icon: updatedEvent.event_banner?.url || null
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(200).json({

@@ -49,10 +49,13 @@ export const sendNotification = async (subscription, payload) => {
  * @param {Object} payload - Notification payload { title, body, icon, url, etc. }
  */
 export const broadcastNotification = async (payload) => {
+    // Attempt push broadcast
     const subscriptions = await prisma.pushSubscription.findMany();
     
     console.log(`[PushService] Broadcasting to ${subscriptions.length} subscribers...`);
     
+    if (subscriptions.length === 0) return { total: 0, successful: 0 };
+
     const results = await Promise.allSettled(
         subscriptions.map(sub => sendNotification(sub, payload))
     );
@@ -60,9 +63,6 @@ export const broadcastNotification = async (payload) => {
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
     console.log(`[PushService] Broadcast complete. Success: ${successful}/${subscriptions.length}`);
     
-    // Auto-save to database history
-    await saveNotification(payload);
-
     return {
         total: subscriptions.length,
         successful
@@ -74,7 +74,7 @@ export const broadcastNotification = async (payload) => {
  * Used for: New Contact form, New Membership registration, etc.
  */
 export const notifyAdmins = async (payload) => {
-    // Find all subscriptions belonging to users with the 'admin' role
+    // Attempt push notification to admin devices
     const adminSubscriptions = await prisma.pushSubscription.findMany({
         where: {
             user: {
@@ -84,7 +84,7 @@ export const notifyAdmins = async (payload) => {
     });
 
     if (adminSubscriptions.length === 0) {
-        console.log('[PushService] No admin subscriptions found to notify.');
+        console.log('[PushService] No admin subscriptions found for push.');
         return { total: 0, successful: 0 };
     }
 
@@ -95,10 +95,6 @@ export const notifyAdmins = async (payload) => {
     );
     
     const successful = results.filter(r => r.status === 'fulfilled' && r.value.success).length;
-    
-    // Auto-save to database history
-    await saveNotification(payload);
-
     return {
         total: adminSubscriptions.length,
         successful

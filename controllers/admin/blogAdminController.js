@@ -90,12 +90,14 @@ const createBlogPost = async (req, res, next) => {
 
         // Send push notification
         if (blogPost.status === 'published') {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Blog Post!',
                 body: blogPost.title,
                 url: `/blog/${blogPost.id}`,
                 icon: blogPost.images?.[0]?.url || null
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(201).json({
@@ -296,12 +298,14 @@ const updateBlogPostById = async (req, res, next) => {
 
         // Smart Notification: Only notify if it was NOT published before, but is NOW published
         if (existingBlogPost.status !== 'published' && updatedBlogPost.status === 'published') {
-            broadcastNotification({
+            const notificationPayload = {
                 title: 'New Blog Post!',
                 body: updatedBlogPost.title,
                 url: `/blog/${updatedBlogPost.id}`,
                 icon: updatedBlogPost.images?.[0]?.url || null
-            });
+            };
+            broadcastNotification(notificationPayload);
+            saveNotification(notificationPayload);
         }
 
         res.status(200).json({
