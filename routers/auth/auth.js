@@ -8,7 +8,7 @@ import {
     forgotPassword,
     verifyOtp,
     resetPassword,
-    completeFirstTimeLogin,
+    // completeFirstTimeLogin,
 } from '../../controllers/auth/authController.js';
 import { authenticate } from '../../middlewares/auth/authenticate.js';
 import { authorize } from '../../middlewares/auth/authorize.js';
@@ -37,6 +37,6 @@ router.post('/verify-otp', verifyOtp);
 router.post('/reset-password', resetPassword);
 
 // Complete first-time login (set flag to false)
-router.patch('/complete-first-time-login', authenticate, completeFirstTimeLogin);
+// router.patch('/complete-first-time-login', authenticate, completeFirstTimeLogin);
 
 export default router;

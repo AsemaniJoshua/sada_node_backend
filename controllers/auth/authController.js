@@ -419,13 +419,15 @@ const forgotPassword = async (req, res, next) => {
         //     }
         // });
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Email sending error:', error);
-            } else {
-                console.log('Email sent successfully:', info.response);
-            }
-        });
+        // transporter.sendMail(mailOptions, (error, info) => {
+        //     if (error) {
+        //         console.error('Email sending error:', error);
+        //     } else {
+        //         console.log('Email sent successfully:', info.response);
+        //     }
+        // });
+
+        await transporter.sendMail(mailOptions);
 
         // Return success response (don't reveal if user exists)
         res.status(200).json({
@@ -581,7 +583,10 @@ const resetPassword = async (req, res, next) => {
         // Update user password
         await prisma.user.update({
             where: { id: user.id },
-            data: { password: hashedPassword },
+            data: {
+                password: hashedPassword,
+                isFirstTimeLogin: false
+            },
         });
 
         // Delete the password reset record
@@ -602,23 +607,23 @@ const resetPassword = async (req, res, next) => {
 /**
  * Complete first-time login (set flag to false)
  */
-const completeFirstTimeLogin = async (req, res, next) => {
-    try {
-        const userId = req.user.userId;
+// const completeFirstTimeLogin = async (req, res, next) => {
+//     try {
+//         const userId = req.user.userId;
 
-        await prisma.user.update({
-            where: { id: userId },
-            data: { isFirstTimeLogin: false }
-        });
+//         await prisma.user.update({
+//             where: { id: userId },
+//             data: { isFirstTimeLogin: false }
+//         });
 
-        res.status(200).json({
-            success: true,
-            message: 'First-time login status updated successfully.'
-        });
-    } catch (error) {
-        next(new AppError(error.message, 500, true));
-    }
-};
+//         res.status(200).json({
+//             success: true,
+//             message: 'First-time login status updated successfully.'
+//         });
+//     } catch (error) {
+//         next(new AppError(error.message, 500, true));
+//     }
+// };
 
 export {
     register,
@@ -628,5 +633,5 @@ export {
     forgotPassword,
     verifyOtp,
     resetPassword,
-    completeFirstTimeLogin,
+    // completeFirstTimeLogin,
 };

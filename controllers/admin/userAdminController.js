@@ -245,7 +245,7 @@ const createUser = async (req, res, next) => {
             email: email.trim(),
             password: hashedPassword,
             name: name.trim(),
-            role: role || 'user',
+            role: role || 'admin',
         };
 
         // Handle image upload if a file is provided
