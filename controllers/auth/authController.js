@@ -132,6 +132,14 @@ const login = async (req, res, next) => {
             },
         });
 
+        // update the firsttime login field to false
+        if (user.isFirstTimeLogin) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { isFirstTimeLogin: false },
+            });
+        }
+        
         // Return success response with tokens
         res.status(200).json({
             success: true,
@@ -625,6 +633,60 @@ const resetPassword = async (req, res, next) => {
 //     }
 // };
 
+/**
+ * Change password for authenticated admin
+ */
+const changePassword = async (req, res, next) => {
+    try {
+        const { oldPassword, newPassword, confirmNewPassword } = req.body;
+        const userId = req.user.userId;
+
+        // 1. Validate inputs
+        if (!oldPassword || !newPassword || !confirmNewPassword) {
+            throw new AppError('Old password, new password and confirmation are required', 400, true);
+        }
+
+        if (newPassword !== confirmNewPassword) {
+            throw new AppError('New and Confirmation Passwords do not match', 400, true);
+        }
+
+        // 2. Find user
+        const user = await prisma.user.findUnique({
+            where: { id: userId }
+        });
+
+        if (!user) {
+            throw new AppError('User not found', 404, true);
+        }
+
+        // 3. Verify old password
+        const isOldPasswordValid = await verify(user.password, oldPassword);
+        if (!isOldPasswordValid) {
+            throw new AppError('Invalid old password', 401, true);
+        }
+
+        // 4. Hash new password
+        const hashedNewPassword = await hash(newPassword);
+
+        // 5. Update password in database
+        // We also set isFirstTimeLogin to false since they've successfully changed their password
+        await prisma.user.update({
+            where: { id: userId },
+            data: { 
+                password: hashedNewPassword,
+                isFirstTimeLogin: false
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Password changed successfully.'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export {
     register,
     login,
@@ -633,5 +695,5 @@ export {
     forgotPassword,
     verifyOtp,
     resetPassword,
-    // completeFirstTimeLogin,
+    changePassword,
 };

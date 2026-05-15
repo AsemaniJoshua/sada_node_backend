@@ -6,9 +6,12 @@ import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
 import { sendArkeselSMS } from '../../utils/sms/arkeselService.js';
 
-// Create nodemailer transporter for membership status emails
+// Create nodemailer transporter with explicit host and port for cloud hosting (Render) compatibility
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    // service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,

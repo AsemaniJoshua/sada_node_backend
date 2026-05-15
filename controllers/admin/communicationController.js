@@ -5,9 +5,12 @@ import { sendArkeselSMS } from '../../utils/sms/arkeselService.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
 
-// Setup Nodemailer transporter
+// Setup Nodemailer transporter with explicit host and port
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    // service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,

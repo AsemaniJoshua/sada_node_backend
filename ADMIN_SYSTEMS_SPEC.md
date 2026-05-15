@@ -6,18 +6,25 @@ This document contains the complete technical specification for administrative i
 
 ## 1. Authentication & Profile Management
 
-### Complete First-Time Login
-Marks the admin's initial setup (e.g., password change) as complete.
+### Change Password
+Allows an authenticated admin to update their password.
 *   **Request Method:** `PATCH`
-*   **Endpoint:** `/api/auth/complete-first-time-login`
+*   **Endpoint:** `/api/auth/change-password`
 *   **Auth:** Admin Token Required
-*   **Request Body:** `None`
+*   **Request Body:**
+```json
+{
+  "oldPassword": "current-password",
+  "newPassword": "new-secure-password",
+  "confirmNewPassword": "new-secure-password"
+}
+```
 
 **Full Response Body:**
 ```json
 {
   "success": true,
-  "message": "First-time login status updated successfully."
+  "message": "Password changed successfully."
 }
 ```
 
