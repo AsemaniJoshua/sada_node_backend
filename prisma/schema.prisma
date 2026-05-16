@@ -61,9 +61,9 @@ model Notification {
 model CommunicationLog {
   id             String            @id @default(uuid())
   type           CommunicationType
-  target         String            // e.g. "all_approved", "specific_member"
+  target         String // e.g. "all_approved", "specific_member"
   recipientCount Int
-  subject        String?           // For emails only
+  subject        String? // For emails only
   message        String            @db.LongText
   adminId        String
   admin          User              @relation(fields: [adminId], references: [id], onDelete: Cascade)
