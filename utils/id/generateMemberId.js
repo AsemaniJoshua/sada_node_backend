@@ -5,7 +5,7 @@ import { prisma } from '../../config/config.js';
  * Format: SADA-XXXXXX (where X is alphanumeric)
  */
 export const generateMemberId = async () => {
-    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const chars = '1234567890';
     let isUnique = false;
     let memberId = '';
 
