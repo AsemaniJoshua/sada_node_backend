@@ -8,13 +8,12 @@ const initiatePayment = async (req, res, next) => {
     try {
         const { id, memberId, full_name, email, membership_role, month_paid_for, year_paid_for, amount, payment_method } = req.body;
 
-        // Validate required IDs
-        if (!id || !id.trim()) {
-            return next(new AppError('UUID (id) is required', 400, true));
-        }
+        // Use whichever ID was provided (UUID or 6-digit ID)
+        const identifier = (id || memberId)?.trim();
 
-        if (!memberId || !memberId.trim()) {
-            return next(new AppError('6-digit Membership ID (memberId) is required', 400, true));
+        // Validate that at least one ID is provided
+        if (!identifier) {
+            return next(new AppError('Membership ID or UUID is required', 400, true));
         }
 
         if (!full_name || !full_name.trim()) {
@@ -45,16 +44,23 @@ const initiatePayment = async (req, res, next) => {
             return next(new AppError('Amount must be greater than 0', 400, true));
         }
 
-        // Verify membership exists using both IDs for verification
+        // Verify membership exists and is approved (Supports both UUID and 6-digit ID)
         const membership = await prisma.membership.findFirst({
             where: {
-                id: id.trim(),
-                memberId: memberId.trim()
+                OR: [
+                    { id: identifier },
+                    { memberId: identifier }
+                ]
             }
         });
 
         if (!membership) {
-            return next(new AppError('Membership not found. Please ensure both UUID and Membership ID are correct and belong to the same member.', 404, true));
+            return next(new AppError('Membership record not found. Please check your ID and try again.', 404, true));
+        }
+
+        // Only approved members can make payments
+        if (membership.status !== 'approved') {
+            return next(new AppError(`Payment rejected. Your membership status is currently '${membership.status}'. Only approved members can make payments.`, 403, true));
         }
 
         // Use the primary UUID for database relations
