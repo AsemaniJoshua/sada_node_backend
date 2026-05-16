@@ -5,7 +5,10 @@ import { prisma } from '../../config/config.js';
 // Get all payments
 const getAllPayments = async (req, res, next) => {
     try {
-        const { status, membership_role, year_paid_for } = req.query;
+        const { status, membership_role, year_paid_for, id, memberId, uniqueMemberId } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
 
         // Build filter conditions
         const where = {};
@@ -34,18 +37,45 @@ const getAllPayments = async (req, res, next) => {
             where.year_paid_for = year;
         }
 
-        const payments = await prisma.payment.findMany({
-            where,
-            include: {
-                membership: true,
-            },
-            orderBy: {
-                createdAt: 'desc',
-            },
-        });
+        // Search by Member ID (UUID or 6-digit code)
+        if (id || memberId || uniqueMemberId) {
+            where.OR = [
+                { memberId: (id || memberId)?.trim() },
+                { uniqueMemberId: (uniqueMemberId || memberId || id)?.trim() },
+                { membership: { memberId: (uniqueMemberId || memberId || id)?.trim() } }
+            ].filter(condition => Object.values(condition)[0] !== undefined);
+        }
+
+        const [payments, total] = await Promise.all([
+            prisma.payment.findMany({
+                where,
+                include: {
+                    membership: {
+                        select: {
+                            memberId: true,
+                            firstName: true,
+                            lastName: true,
+                            email: true
+                        }
+                    },
+                },
+                orderBy: {
+                    createdAt: 'desc',
+                },
+                skip,
+                take: limit,
+            }),
+            prisma.payment.count({ where })
+        ]);
 
         res.status(200).json({
             success: true,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            },
             data: payments,
         });
     } catch (error) {
@@ -78,4 +108,56 @@ const getPaymentById = async (req, res, next) => {
     }
 };
 
-export { getAllPayments, getPaymentById };
+/**
+ * Get all payments for a specific member by their 6-digit Unique ID
+ */
+const getPaymentsByUniqueMemberId = async (req, res, next) => {
+    try {
+        const { uniqueMemberId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 50;
+        const skip = (page - 1) * limit;
+
+        const [payments, total] = await Promise.all([
+            prisma.payment.findMany({
+                where: { 
+                    OR: [
+                        { uniqueMemberId },
+                        { membership: { memberId: uniqueMemberId } }
+                    ]
+                },
+                include: {
+                    membership: true,
+                },
+                orderBy: {
+                    createdAt: 'desc'
+                },
+                skip,
+                take: limit
+            }),
+            prisma.payment.count({
+                where: {
+                    OR: [
+                        { uniqueMemberId },
+                        { membership: { memberId: uniqueMemberId } }
+                    ]
+                }
+            })
+        ]);
+
+        res.status(200).json({
+            success: true,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            },
+            data: payments,
+        });
+    } catch (error) {
+        next(new AppError(error.message, 500, true));
+    }
+};
+
+export { getAllPayments, getPaymentById, getPaymentsByUniqueMemberId };

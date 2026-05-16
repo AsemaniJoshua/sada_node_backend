@@ -1,6 +1,6 @@
 // Public membership routes
 import express from 'express';
-import { registerMember, getAllMemberships, getMembershipById } from '../../controllers/public/membershipPublicController.js';
+import { registerMember, getAllMemberships, getMembershipById, getMemberByMemberId } from '../../controllers/public/membershipPublicController.js';
 
 const router = express.Router();
 
@@ -10,7 +10,10 @@ router.post('/', registerMember);
 // Get all approved members
 router.get('/', getAllMemberships);
 
-// Get approved member by ID
+// Get member by Unique Member ID (SADA-XXXXXX)
+router.get('/member-id/:memberId', getMemberByMemberId);
+
+// Get approved member by ID (UUID)
 router.get('/:id', getMembershipById);
 
 export default router;

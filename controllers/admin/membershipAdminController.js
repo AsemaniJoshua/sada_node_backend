@@ -5,6 +5,7 @@ import nodemailer from 'nodemailer';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
 import { sendArkeselSMS } from '../../utils/sms/arkeselService.js';
+import { generateMemberId } from '../../utils/id/generateMemberId.js';
 
 // Create nodemailer transporter with explicit host and port for cloud hosting (Render) compatibility
 const transporter = nodemailer.createTransport({
@@ -105,9 +106,13 @@ const createMembership = async (req, res, next) => {
             throw new AppError('Phone number already registered', 409, true);
         }
 
+        // Generate unique member ID
+        const memberId = await generateMemberId();
+
         // Create membership record
         const membership = await prisma.membership.create({
             data: {
+                memberId,
                 firstName,
                 lastName,
                 dob,
@@ -474,6 +479,7 @@ const approveMembership = async (req, res, next) => {
                             
                             <div class="success-box">
                                 <strong>Welcome to SADA Family!</strong>
+                                <p>Your Membership ID: <strong>${existingMembership.memberId}</strong></p>
                                 <p>You are now an approved member. Thank you for joining our organization.</p>
                             </div>
                             
@@ -496,7 +502,7 @@ const approveMembership = async (req, res, next) => {
         });
 
         // Send SMS asynchronously
-        const smsMessage = `Congratulations ${existingMembership.firstName}! Your SADA membership has been APPROVED. Welcome to the family!`;
+        const smsMessage = `Congratulations ${existingMembership.firstName}! Your SADA membership has been APPROVED. Your Membership ID is ${existingMembership.memberId}. Welcome to the family!`;
         sendArkeselSMS(existingMembership.phone, smsMessage).catch(err => {
             console.error('Error sending approval SMS:', err);
         });
@@ -703,10 +709,39 @@ const rejectMembership = async (req, res, next) => {
     }
 };
 
+/**
+ * Get membership record by Member ID (Admin)
+ */
+const getMemberByMemberId = async (req, res, next) => {
+    try {
+        const { memberId } = req.params;
+
+        if (!memberId) {
+            throw new AppError('Member ID is required', 400, true);
+        }
+
+        const membership = await prisma.membership.findUnique({
+            where: { memberId }
+        });
+
+        if (!membership) {
+            throw new AppError('Membership record not found', 404, true);
+        }
+
+        res.status(200).json({
+            success: true,
+            data: membership
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export {
     createMembership,
     getAllMemberships,
     getMembershipById,
+    getMemberByMemberId,
     updateMembershipById,
     deleteMembershipById,
     approveMembership,

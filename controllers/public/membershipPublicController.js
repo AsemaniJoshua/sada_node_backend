@@ -3,6 +3,7 @@ import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import nodemailer from 'nodemailer';
 import { notifyAdmins, saveNotification } from '../../utils/notifications/pushService.js';
+import { generateMemberId } from '../../utils/id/generateMemberId.js';
 
 // Create nodemailer transporter for membership confirmation emails
 const transporter = nodemailer.createTransport({
@@ -110,9 +111,13 @@ const registerMember = async (req, res, next) => {
             throw new AppError('Phone number already registered', 409, true);
         }
 
+        // Generate unique member ID
+        const memberId = await generateMemberId();
+
         // Create membership record
         const membership = await prisma.membership.create({
             data: {
+                memberId,
                 firstName,
                 lastName,
                 dob,
@@ -347,8 +352,44 @@ const getMembershipById = async (req, res, next) => {
     }
 };
 
+/**
+ * Get membership status by Member ID (Public)
+ */
+const getMemberByMemberId = async (req, res, next) => {
+    try {
+        const { memberId } = req.params;
+
+        if (!memberId) {
+            throw new AppError('Member ID is required', 400, true);
+        }
+
+        const membership = await prisma.membership.findUnique({
+            where: { memberId },
+            select: {
+                memberId: true,
+                firstName: true,
+                lastName: true,
+                status: true,
+                createdAt: true
+            }
+        });
+
+        if (!membership) {
+            throw new AppError('Membership record not found', 404, true);
+        }
+
+        res.status(200).json({
+            success: true,
+            data: membership
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export {
     registerMember,
     getAllMemberships,
     getMembershipById,
+    getMemberByMemberId,
 };

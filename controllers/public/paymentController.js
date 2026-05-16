@@ -6,11 +6,15 @@ import crypto from 'crypto';
 // Create payment and initialize with Paystack
 const initiatePayment = async (req, res, next) => {
     try {
-        const { memberId, full_name, email, membership_role, month_paid_for, year_paid_for, amount, payment_method } = req.body;
+        const { id, memberId, full_name, email, membership_role, month_paid_for, year_paid_for, amount, payment_method } = req.body;
 
-        // Validate required fields
+        // Validate required IDs
+        if (!id || !id.trim()) {
+            return next(new AppError('UUID (id) is required', 400, true));
+        }
+
         if (!memberId || !memberId.trim()) {
-            return next(new AppError('Member ID is required and cannot be empty', 400, true));
+            return next(new AppError('6-digit Membership ID (memberId) is required', 400, true));
         }
 
         if (!full_name || !full_name.trim()) {
@@ -41,14 +45,20 @@ const initiatePayment = async (req, res, next) => {
             return next(new AppError('Amount must be greater than 0', 400, true));
         }
 
-        // Verify membership exists
-        const membership = await prisma.membership.findUnique({
-            where: { id: memberId.trim() },
+        // Verify membership exists using both IDs for verification
+        const membership = await prisma.membership.findFirst({
+            where: {
+                id: id.trim(),
+                memberId: memberId.trim()
+            }
         });
 
         if (!membership) {
-            return next(new AppError('Membership not found', 404, true));
+            return next(new AppError('Membership not found. Please ensure both UUID and Membership ID are correct and belong to the same member.', 404, true));
         }
+
+        // Use the primary UUID for database relations
+        const membershipUuid = membership.id;
 
         // Calculate amount with 1% fee (in Ghana Cedis)
         const baseAmount = parseFloat(amount);
@@ -64,7 +74,8 @@ const initiatePayment = async (req, res, next) => {
         // Create payment record in database
         const payment = await prisma.payment.create({
             data: {
-                memberId: memberId.trim(),
+                memberId: membershipUuid,
+                uniqueMemberId: membership.memberId,
                 full_name: full_name.trim(),
                 email: email.trim(),
                 membership_role,
@@ -91,7 +102,8 @@ const initiatePayment = async (req, res, next) => {
                 reference,
                 callback_url: process.env.PAYSTACK_CALLBACK_URL,
                 metadata: {
-                    memberId: memberId.trim(),
+                    memberId: membershipUuid,
+                    uniqueMemberId: membership.memberId,
                     full_name: full_name.trim(),
                     membership_role,
                     month_paid_for,
@@ -214,6 +226,7 @@ const verifyPayment = async (req, res, next) => {
                 year_paid_for: updatedPayment.year_paid_for,
                 payment_method: updatedPayment.payment_method,
                 memberId: updatedPayment.memberId,
+                uniqueMemberId: updatedPayment.uniqueMemberId,
             },
         });
     } catch (error) {

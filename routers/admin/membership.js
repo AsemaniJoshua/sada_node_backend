@@ -10,9 +10,13 @@ import {
     deleteMembershipById,
     approveMembership,
     rejectMembership,
+    getMemberByMemberId,
 } from '../../controllers/admin/membershipAdminController.js';
 
 const router = express.Router();
+
+// Get membership by Unique Member ID (SADA-XXXXXX)
+router.get('/member-id/:memberId', authenticate, authorize('admin'), getMemberByMemberId);
 
 // Create new membership record (manual)
 router.post('/', authenticate, authorize('admin'), createMembership);
@@ -20,7 +24,7 @@ router.post('/', authenticate, authorize('admin'), createMembership);
 // Get all membership records
 router.get('/', authenticate, authorize('admin'), getAllMemberships);
 
-// Get membership record by ID
+// Get membership record by ID (UUID)
 router.get('/:id', authenticate, authorize('admin'), getMembershipById);
 
 // Update membership record by ID

@@ -148,6 +148,7 @@ model About {
 // Membership model - Member registration and management
 model Membership {
   id                    String           @id @default(uuid())
+  memberId              String           @unique @default("TEMP")
   firstName             String
   lastName              String
   dob                   String // "1990-05-15" format
@@ -324,6 +325,7 @@ model Payment {
   id              String         @id @default(uuid())
   membership      Membership     @relation(fields: [memberId], references: [id], onDelete: Cascade)
   memberId        String
+  uniqueMemberId  String?
   full_name       String
   email           String
   membership_role MembershipRole
