@@ -364,14 +364,7 @@ const getMemberByMemberId = async (req, res, next) => {
         }
 
         const membership = await prisma.membership.findUnique({
-            where: { memberId },
-            select: {
-                memberId: true,
-                firstName: true,
-                lastName: true,
-                status: true,
-                createdAt: true
-            }
+            where: { memberId }
         });
 
         if (!membership) {
