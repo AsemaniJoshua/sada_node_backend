@@ -5,7 +5,7 @@ import { initiatePayment, verifyPayment } from '../../controllers/public/payment
 const router = express.Router();
 
 // Initiate payment
-router.post('/', initiatePayment);
+router.post('/initiate', initiatePayment);
 
 // Verify payment
 router.get('/verify/:reference', verifyPayment);
