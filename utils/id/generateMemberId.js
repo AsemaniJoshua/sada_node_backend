@@ -13,7 +13,7 @@ export const generateMemberId = async () => {
     const lastMember = await prisma.membership.findFirst({
         where: {
             memberId: {
-                not: null,
+                not: 'TEMP',
             },
         },
         orderBy: {
