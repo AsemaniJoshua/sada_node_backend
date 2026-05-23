@@ -178,6 +178,11 @@ const getAllMemberships = async (req, res, next) => {
         const [memberships, total] = await Promise.all([
             prisma.membership.findMany({
                 where,
+                include: {
+                    payments: {
+                        orderBy: { createdAt: 'desc' }
+                    }
+                },
                 orderBy: { createdAt: 'desc' },
                 skip,
                 take: parseInt(limit),
@@ -214,6 +219,11 @@ const getMembershipById = async (req, res, next) => {
 
         const membership = await prisma.membership.findUnique({
             where: { id },
+            include: {
+                payments: {
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
         });
 
         if (!membership) {
@@ -721,7 +731,12 @@ const getMemberByMemberId = async (req, res, next) => {
         }
 
         const membership = await prisma.membership.findUnique({
-            where: { memberId }
+            where: { memberId },
+            include: {
+                payments: {
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
         });
 
         if (!membership) {
