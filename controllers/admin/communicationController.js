@@ -159,8 +159,19 @@ export const sendSystemSMS = async (req, res, next) => {
 
         const { phones, description } = await getRecipients(target, targetId);
 
-        // Filter out empty phones and handle formatting if needed
-        const validPhones = phones.filter(p => p && p.trim().length >= 10);
+        // Filter out empty phones and handle formatting
+        let validPhones = phones.filter(p => p && p.trim().length >= 10);
+        
+        // Format to international format for Ghana (assuming Ghana context)
+        validPhones = validPhones.map(p => {
+            let num = p.trim().replace(/\D/g, ''); // Remove non-digits
+            if (num.startsWith('0')) {
+                num = '233' + num.substring(1);
+            } else if (num.startsWith('+')) {
+                num = num.substring(1);
+            }
+            return num;
+        });
 
         if (validPhones.length === 0) {
             return next(new AppError('No valid phone numbers found for selected target', 404, true));

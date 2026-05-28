@@ -19,7 +19,7 @@ export const sendArkeselSMS = async (recipients, message) => {
         const to = Array.isArray(recipients) ? recipients : [recipients];
 
         const response = await axios.post('https://sms.arkesel.com/api/v2/sms/send', {
-            sender: senderId,
+            sender: "ETCC",
             message: message,
             recipients: to,
         }, {
@@ -36,7 +36,9 @@ export const sendArkeselSMS = async (recipients, message) => {
             throw new Error(response.data.message || 'Unknown Arkesel error');
         }
     } catch (error) {
-        console.error('[Arkesel] SMS Error:', error.response?.data || error.message);
-        return { success: false, error: error.message };
+        const errorDetails = error.response?.data?.message || error.response?.data || error.message;
+        const errorMessage = typeof errorDetails === 'string' ? errorDetails : JSON.stringify(errorDetails);
+        console.error('[Arkesel] SMS Error:', errorMessage);
+        return { success: false, error: errorMessage };
     }
 };
