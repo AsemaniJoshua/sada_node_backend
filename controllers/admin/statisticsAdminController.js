@@ -92,9 +92,20 @@ const getDashboardStatistics = async (req, res, next) => {
         });
         const successfulPayments = await prisma.payment.findMany({
             where: { status: 'successful' },
-            select: { amount: true },
+            select: { amount: true, membership_role: true },
         });
         const totalRevenue = successfulPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+        const revenueByRole = successfulPayments.reduce((acc, payment) => {
+            const amount = parseFloat(payment.amount);
+            if (payment.membership_role === 'standard') {
+                acc.standard += amount;
+            } else if (payment.membership_role === 'executive') {
+                acc.executive += amount;
+            } else if (payment.membership_role === 'voluntary') {
+                acc.voluntary += amount;
+            }
+            return acc;
+        }, { standard: 0, executive: 0, voluntary: 0 });
         const averagePaymentAmount = totalPayments > 0 
             ? successfulPayments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0) / successfulPayments.length
             : 0;
@@ -191,6 +202,11 @@ const getDashboardStatistics = async (req, res, next) => {
                         return acc;
                     }, {}),
                     totalRevenue: totalRevenue.toFixed(2),
+                    revenueByRole: {
+                        standard: revenueByRole.standard.toFixed(2),
+                        executive: revenueByRole.executive.toFixed(2),
+                        voluntary: revenueByRole.voluntary.toFixed(2),
+                    },
                     averagePayment: averagePaymentAmount.toFixed(2),
                     successRate: totalPayments > 0 
                         ? ((paymentsByStatus.find((s) => s.status === 'successful')?._count.id || 0) / totalPayments * 100).toFixed(2) + '%'
@@ -249,11 +265,21 @@ const getAdminDashboardStats = async (req, res, next) => {
         // 3. Total Revenue (all successful payments)
         const successfulPayments = await prisma.payment.findMany({
             where: { status: 'successful' },
-            select: { amount: true }
+            select: { amount: true, membership_role: true }
         });
 
-        
         const totalRevenue = successfulPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+        const revenueByRole = successfulPayments.reduce((acc, payment) => {
+            const amount = parseFloat(payment.amount);
+            if (payment.membership_role === 'standard') {
+                acc.standard += amount;
+            } else if (payment.membership_role === 'executive') {
+                acc.executive += amount;
+            } else if (payment.membership_role === 'voluntary') {
+                acc.voluntary += amount;
+            }
+            return acc;
+        }, { standard: 0, executive: 0, voluntary: 0 });
 
         // 4. Published Blog Posts (status: published)
         const publishedBlogPosts = await prisma.blogPost.count({
@@ -330,6 +356,11 @@ const getAdminDashboardStats = async (req, res, next) => {
                     totalUsers,
                     activeProjects,
                     totalRevenue: totalRevenue.toFixed(2),
+                    revenueByRole: {
+                        standard: revenueByRole.standard.toFixed(2),
+                        executive: revenueByRole.executive.toFixed(2),
+                        voluntary: revenueByRole.voluntary.toFixed(2),
+                    },
                     publishedBlogPosts
                 },
                 revenueOverview,
