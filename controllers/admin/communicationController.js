@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '../../config/config.js';
 import { AppError } from '../../utils/error/AppError.js';
-import { sendArkeselSMS } from '../../utils/sms/arkeselService.js';
+import { sendSMS } from '../../utils/sms/smsService.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
 
@@ -177,7 +177,7 @@ export const sendSystemSMS = async (req, res, next) => {
             return next(new AppError('No valid phone numbers found for selected target', 404, true));
         }
 
-        const result = await sendArkeselSMS(validPhones, message);
+        const result = await sendSMS(validPhones, message);
 
         if (result.success) {
             await logActivity({

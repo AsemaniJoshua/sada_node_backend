@@ -4,7 +4,7 @@ import { prisma } from '../../config/config.js';
 import nodemailer from 'nodemailer';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
-import { sendArkeselSMS } from '../../utils/sms/arkeselService.js';
+import { sendSMS } from '../../utils/sms/smsService.js';
 import { generateMemberId } from '../../utils/id/generateMemberId.js';
 
 // Create nodemailer transporter with explicit host and port for cloud hosting (Render) compatibility
@@ -513,7 +513,7 @@ const approveMembership = async (req, res, next) => {
 
         // Send SMS asynchronously
         const smsMessage = `Congratulations ${existingMembership.firstName}! Your SADA membership has been APPROVED. Your Membership ID is ${existingMembership.memberId}. Welcome to the family!`;
-        sendArkeselSMS(existingMembership.phone, smsMessage).catch(err => {
+        sendSMS(existingMembership.phone, smsMessage).catch(err => {
             console.error('Error sending approval SMS:', err);
         });
 
@@ -688,7 +688,7 @@ const rejectMembership = async (req, res, next) => {
 
         // Send SMS asynchronously
         const smsMessage = `Hello ${existingMembership.firstName}, your SADA membership application status has been updated. Result: Rejected. Reason: ${reason}. Please check your email for details.`;
-        sendArkeselSMS(existingMembership.phone, smsMessage).catch(err => {
+        sendSMS(existingMembership.phone, smsMessage).catch(err => {
             console.error('Error sending rejection SMS:', err);
         });
 
