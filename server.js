@@ -61,7 +61,6 @@ app.use(cors({
 }));
 
 
-// Importing routes
 app.use('/api/auth', authRouter);
 // Public routes
 app.use('/api/home', publicHomeRouter);
