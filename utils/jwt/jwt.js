@@ -1,4 +1,3 @@
-// JWT utility functions for token generation and verification
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
 
