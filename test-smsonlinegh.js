@@ -1,9 +1,4 @@
 import axios from 'axios';
-
-// ==========================================
-// TEST CONFIGURATION
-// Replace these values with your actual details
-// ==========================================
 const API_KEY = '51aeb305805f345849bbaacc633962c990bcd520b1e33baab4f9cd19b22f8593'; 
 const SENDER_ID = 'GABONNEY'; // Ensure this sender ID is approved on your SMSOnlineGH dashboard
 const PHONE_NUMBER = '233550807914'; // Provide the phone number in international format (e.g. 233241234567)
