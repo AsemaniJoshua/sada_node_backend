@@ -20,7 +20,7 @@ async function seed() {
             }
         });
 
-        console.log('✅ Successfully seeded database. You can now login with admin@sada.org / 12345678');
+        console.log('Successfully seeded database. You can now login with admin@sada.org / 12345678');
     } catch (error) {
         console.error('❌ Error seeding database:', error);
     } finally {
