@@ -5,7 +5,6 @@
 **Environment:** Node.js with Express, Prisma ORM, MariaDB  
 **Last Updated:** April 27, 2026
 
----
 
 ## Quick Start
 
