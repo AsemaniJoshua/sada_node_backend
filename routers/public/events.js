@@ -1,4 +1,3 @@
-// Public event routes
 import express from 'express';
 import { getAllEvents, getEventById } from '../../controllers/public/eventController.js';
 
