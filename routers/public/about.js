@@ -1,4 +1,3 @@
-// Public about routes
 import express from 'express';
 import { getAbout } from '../../controllers/public/aboutController.js';
 
