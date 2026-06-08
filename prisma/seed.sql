@@ -2,7 +2,7 @@
 -- Default Admin User Credentials
 -- ================================
 -- Email: admin@sada.org
--- Password: 12345678 (hashed with argon2id)
+-- Password: 12345678 (hashed with bcrypt)
 --
 -- INSTRUCTIONS:
 -- 1. Ensure your database is created and empty
@@ -21,7 +21,7 @@ INSERT INTO `User` (
 ) VALUES (
     UUID(),
     'admin@sada.org',
-    '$argon2id$v=19$m=65536,t=3,p=4$gg4bCw/uod6Yw60ms1tc4A$qIhKiYZJvtZZ/cE8RwvCREfYNzNP1ka2R7rdR506LrU',
+    '$2b$10$.zKlQAOMNhvRCTt5ySe1fu61BbeOL6RVCeifL0xnIuWuJ4w7LB3KG',
     'admin',
     NOW(),
     NOW()

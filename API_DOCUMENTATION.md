@@ -459,7 +459,7 @@ All records include:
 - Minimum 8 characters
 - No maximum length
 - Can contain any characters (letters, numbers, symbols)
-- Hashed with Argon2id before storage
+- Hashed with Bcrypt before storage
 - Previous password reset token is deleted after successful reset
 
 ### Success Response (200)
@@ -3222,7 +3222,7 @@ All uploaded images are stored as:
 {
   id: String (UUID, primary key),
   email: String (unique),
-  password: String (hashed with argon2),
+  password: String (hashed with bcrypt),
   name: String,
   role: Enum (admin | user, default: user),
   createdAt: DateTime (auto),

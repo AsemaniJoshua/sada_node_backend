@@ -1,5 +1,5 @@
 // Authentication controller - Handle auth logic
-import { hash, verify } from 'argon2';
+import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import nodemailer from 'nodemailer';
 import { AppError } from '../../utils/error/AppError.js';
@@ -57,7 +57,7 @@ const register = async (req, res, next) => {
         }
 
         // Hash password using argon2
-        const hashedPassword = await hash(password);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user with specified role (defaults to 'user')
         const user = await prisma.user.create({
@@ -109,7 +109,7 @@ const login = async (req, res, next) => {
         }
 
         // Verify password using argon2
-        const isPasswordValid = await verify(user.password, password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
             throw new AppError('Invalid password', 401, true);
@@ -285,7 +285,7 @@ const forgotPassword = async (req, res, next) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
         // Hash OTP for storage
-        const otpHash = await hash(otp);
+        const otpHash = await bcrypt.hash(otp, 10);
 
         // Set OTP expiry to 15 minutes from now
         const expiresAt = new Date();
@@ -493,7 +493,7 @@ const verifyOtp = async (req, res, next) => {
         }
 
         // Verify OTP
-        const isOtpValid = await verify(passwordReset.otpHash, otp.trim());
+        const isOtpValid = await bcrypt.compare(otp.trim(), passwordReset.otpHash);
 
         if (!isOtpValid) {
             throw new AppError('Invalid OTP', 401, true);
@@ -586,7 +586,7 @@ const resetPassword = async (req, res, next) => {
         // }
 
         // Hash new password
-        const hashedPassword = await hash(newPassword);
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Update user password
         await prisma.user.update({
@@ -660,13 +660,13 @@ const changePassword = async (req, res, next) => {
         }
 
         // 3. Verify old password
-        const isOldPasswordValid = await verify(user.password, oldPassword);
+        const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
         if (!isOldPasswordValid) {
             throw new AppError('Invalid old password', 401, true);
         }
 
         // 4. Hash new password
-        const hashedNewPassword = await hash(newPassword);
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
 
         // 5. Update password in database
         // We also set isFirstTimeLogin to false since they've successfully changed their password
