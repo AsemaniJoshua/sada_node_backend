@@ -1,5 +1,5 @@
 // Admin User Controller - Manage admin profiles
-import { hash, verify } from 'argon2';
+import bcrypt from 'bcryptjs';
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
@@ -55,7 +55,7 @@ const updateProfile = async (req, res, next) => {
         // Handle password update if oldPassword is provided
         if (oldPassword) {
             // Verify old password
-            const isPasswordValid = await verify(user.password, oldPassword);
+            const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
             if (!isPasswordValid) {
                 throw new AppError('Invalid old password', 401, true);
             }
@@ -74,7 +74,7 @@ const updateProfile = async (req, res, next) => {
             }
 
             // Hash new password
-            updateData.password = await hash(newPassword);
+            updateData.password = await bcrypt.hash(newPassword, 10);
         }
 
         // Handle image upload if a file is provided
@@ -238,7 +238,7 @@ const createUser = async (req, res, next) => {
         }
 
         // Hash password
-        const hashedPassword = await hash(password);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
         // Prepare user data
         const userData = {
@@ -346,7 +346,7 @@ const updateUserById = async (req, res, next) => {
             if (password.length < 8) {
                 throw new AppError('Password must be at least 8 characters long', 400, true);
             }
-            updateData.password = await hash(password);
+            updateData.password = await bcrypt.hash(password, 10);
         }
 
         // Handle image upload if a file is provided
