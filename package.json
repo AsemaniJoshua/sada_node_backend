@@ -7,6 +7,7 @@
     "dev": "nodemon --exec tsx server.js",
     "start": "tsx server.js",
     "seed": "tsx seed.js",
+    "db:deploy": "prisma migrate deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
