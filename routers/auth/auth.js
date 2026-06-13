@@ -15,7 +15,7 @@ import { authorize } from '../../middlewares/auth/authorize.js';
 
 const router = express.Router();
 
-// Register new user
+// Register  user
 router.post('/register', authenticate, authorize('admin'), register);
 
 // Login user

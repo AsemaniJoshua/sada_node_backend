@@ -1,4 +1,3 @@
-// Public blog routes
 import express from 'express';
 import { getAllBlogPosts, getBlogPostById } from '../../controllers/public/blogController.js';
 

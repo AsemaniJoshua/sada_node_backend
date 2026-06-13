@@ -1,4 +1,3 @@
-// Public Announcements routes
 import express from 'express';
 import { getAllAnnouncements, getAnnouncementById } from '../../controllers/public/announcementController.js';
 
