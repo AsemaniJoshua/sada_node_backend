@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec tsx server.js",
-    "start": "tsx server.js",
-    "seed": "tsx seed.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "seed": "node seed.js",
     "db:deploy": "prisma migrate deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,8 +15,8 @@
     "url": "git+https://github.com/AsemaniJoshua/sada_node_backend.git"
   },
   "dependencies": {
-    "@prisma/adapter-mariadb": "^7.8.0",
-    "@prisma/client": "^7.8.0",
+    "@prisma/adapter-mariadb": "^6.19.3",
+    "@prisma/client": "^6.19.3",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",
@@ -29,14 +29,13 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^8.0.3",
     "paystack-node": "^0.3.0",
-    "tsx": "^4.21.0",
     "web-push": "^3.6.7",
     "winston": "^3.19.0"
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "nodemon": "^3.1.14",
-    "prisma": "^7.8.0",
+    "prisma": "^6.19.3",
     "ts-node": "^10.9.2"
   },
   "keywords": [],
