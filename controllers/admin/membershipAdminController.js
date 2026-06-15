@@ -512,7 +512,7 @@ const approveMembership = async (req, res, next) => {
         });
 
         // Send SMS asynchronously
-        const smsMessage = `Congratulations ${existingMembership.firstName}! Your SADA membership has been APPROVED. Your Membership ID is ${existingMembership.memberId}. Welcome to the family!`;
+        const smsMessage = `Congratulations ${existingMembership.firstName}! Your SADA Membership ID is ${existingMembership.memberId}. Welcome to the family!`;
         sendSMS(existingMembership.phone, smsMessage).catch(err => {
             console.error('Error sending approval SMS:', err);
         });
