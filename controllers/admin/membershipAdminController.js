@@ -13,6 +13,7 @@ const transporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true, // Use SSL
+    connectionTimeout: 10000, // Fail fast in 10s to prevent Cloudflare 524 timeouts
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
