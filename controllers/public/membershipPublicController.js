@@ -1,22 +1,9 @@
 // Public membership controller - Member registration and read operations
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '../../utils/email/emailService.js';
 import { notifyAdmins, saveNotification } from '../../utils/notifications/pushService.js';
 import { generateMemberId } from '../../utils/id/generateMemberId.js';
-
-// Create nodemailer transporter for membership confirmation emails
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    connectionTimeout: 10000, // Fail fast in 10s to prevent Cloudflare 524 timeouts
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-    },
-});
 
 /**
  * Register as a member
@@ -258,10 +245,8 @@ const registerMember = async (req, res, next) => {
         };
 
         // Send email asynchronously
-        transporter.sendMail(mailOptions, (error) => {
-            if (error) {
-                console.error('Error sending membership confirmation email:', error);
-            }
+        sendEmail(mailOptions).catch((error) => {
+            console.error('Error sending membership confirmation email:', error);
         });
 
         // Send push notification to admins

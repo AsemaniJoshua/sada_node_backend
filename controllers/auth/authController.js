@@ -1,23 +1,10 @@
 // Authentication controller - Handle auth logic
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '../../utils/email/emailService.js';
 import { AppError } from '../../utils/error/AppError.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt/jwt.js';
 import { prisma } from '../../config/config.js';
-
-// Create nodemailer transporter for password reset emails
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    connectionTimeout: 10000, // Fail fast in 10s to prevent Cloudflare 524 timeouts
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-    },
-});
 
 /**
  * Register a new user
@@ -423,23 +410,7 @@ const forgotPassword = async (req, res, next) => {
                 </html>
             `,
         };
-
-        // Send email asynchronously (don't wait for response)
-        // await transporter.sendMail(mailOptions, (error) => {
-        //     if (error) {
-        //         console.error('Error sending OTP email:', error);
-        //     }
-        // });
-
-        // transporter.sendMail(mailOptions, (error, info) => {
-        //     if (error) {
-        //         console.error('Email sending error:', error);
-        //     } else {
-        //         console.log('Email sent successfully:', info.response);
-        //     }
-        // });
-
-        await transporter.sendMail(mailOptions);
+        await sendEmail(mailOptions);
 
         // Return success response (don't reveal if user exists)
         res.status(200).json({

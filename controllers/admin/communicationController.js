@@ -1,22 +1,9 @@
-import nodemailer from 'nodemailer';
+import { sendEmail } from '../../utils/email/emailService.js';
 import { prisma } from '../../config/config.js';
 import { AppError } from '../../utils/error/AppError.js';
 import { sendSMS } from '../../utils/sms/smsService.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
-
-// Setup Nodemailer transporter with explicit host and port
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    connectionTimeout: 10000, // Fail fast in 10s to prevent Cloudflare 524 timeouts
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-    },
-});
 
 /**
  * Helper to fetch recipients based on target
@@ -108,7 +95,7 @@ export const sendSystemEmail = async (req, res, next) => {
             `
         };
 
-        await transporter.sendMail(mailOptions);
+        await sendEmail(mailOptions);
 
         await logActivity({
             userId: req.user.userId,

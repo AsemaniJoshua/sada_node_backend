@@ -1,24 +1,11 @@
 // Admin membership controller - CRUD operations and approval/rejection
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
-import nodemailer from 'nodemailer';
+import { sendEmail } from '../../utils/email/emailService.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { saveNotification } from '../../utils/notifications/pushService.js';
 import { sendSMS } from '../../utils/sms/smsService.js';
 import { generateMemberId } from '../../utils/id/generateMemberId.js';
-
-// Create nodemailer transporter with explicit host and port for cloud hosting (Render) compatibility
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL
-    connectionTimeout: 10000, // Fail fast in 10s to prevent Cloudflare 524 timeouts
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-    },
-});
 
 /**
  * Create new membership record (manual creation by admin)
@@ -506,10 +493,8 @@ const approveMembership = async (req, res, next) => {
         };
 
         // Send email asynchronously
-        transporter.sendMail(mailOptions, (error) => {
-            if (error) {
-                console.error('Error sending approval email:', error);
-            }
+        sendEmail(mailOptions).catch((error) => {
+            console.error('Error sending approval email:', error);
         });
 
         // Send SMS asynchronously
@@ -681,10 +666,8 @@ const rejectMembership = async (req, res, next) => {
         };
 
         // Send email asynchronously
-        transporter.sendMail(mailOptions, (error) => {
-            if (error) {
-                console.error('Error sending rejection email:', error);
-            }
+        sendEmail(mailOptions).catch((error) => {
+            console.error('Error sending rejection email:', error);
         });
 
         // Send SMS asynchronously

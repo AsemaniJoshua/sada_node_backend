@@ -1,21 +1,8 @@
 // Public contact controller
-import nodemailer from 'nodemailer';
+import { sendEmail } from '../../utils/email/emailService.js';
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { notifyAdmins, saveNotification } from '../../utils/notifications/pushService.js';
-
-// Create nodemailer transporter
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    connectionTimeout: 10000, // Fail fast in 10s to prevent Cloudflare 524 timeouts
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-    },
-});
 
 // Create contact submission
 const createContact = async (req, res, next) => {
@@ -201,12 +188,8 @@ const createContact = async (req, res, next) => {
             `,
         };
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if (error) {
-                console.error('Email sending error:', error);
-            } else {
-                console.log('Email sent successfully:', info.response);
-            }
+        sendEmail(mailOptions).catch((error) => {
+            console.error('Email sending error:', error);
         });
 
         // Send push notification to admins
