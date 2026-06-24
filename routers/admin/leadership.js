@@ -9,6 +9,7 @@ import {
     getLeadershipById,
     updateLeadershipById,
     deleteLeadershipById,
+    reorderLeadership,
 } from '../../controllers/admin/leadershipAdminController.js';
 
 const router = express.Router();
@@ -18,6 +19,9 @@ router.post('/', authenticate, authorize('admin'), upload.single('image'), creat
 
 // Get all leadership profiles
 router.get('/', authenticate, authorize('admin'), getAllLeadership);
+
+// Reorder leadership profiles
+router.patch('/reorder', authenticate, authorize('admin'), reorderLeadership);
 
 // Get leadership profile by ID
 router.get('/:id', authenticate, authorize('admin'), getLeadershipById);

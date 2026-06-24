@@ -92,9 +92,10 @@ const getAllLeadership = async (req, res, next) => {
 
         const [leadership, total] = await Promise.all([
             prisma.leadership.findMany({
-                orderBy: {
-                    createdAt: 'desc',
-                },
+                orderBy: [
+                    { sort_order: { sort: 'asc', nulls: 'last' } },
+                    { createdAt: 'desc' }
+                ],
                 skip,
                 take: parseInt(limit),
             }),
@@ -299,10 +300,87 @@ const deleteLeadershipById = async (req, res, next) => {
     }
 };
 
+// Reorder leadership profiles (bulk update)
+const reorderLeadership = async (req, res, next) => {
+    try {
+        const { order } = req.body;
+
+        // 1. Validation: order is required and must be a non-empty array
+        if (!order || !Array.isArray(order) || order.length === 0) {
+            return next(new AppError('order array is required and must not be empty.', 400, true));
+        }
+
+        // 2. Validate format: sort_order must be a non-negative integer, id must be present
+        const ids = [];
+        const sortOrders = [];
+        for (const item of order) {
+            if (!item.id) {
+                return next(new AppError('Each item in order must have an id.', 400, true));
+            }
+            if (typeof item.sort_order !== 'number' || item.sort_order < 0 || !Number.isInteger(item.sort_order)) {
+                return next(new AppError('sort_order must be a non-negative integer.', 400, true));
+            }
+            ids.push(item.id);
+            sortOrders.push(item.sort_order);
+        }
+
+        // 3. Validate duplicate sort_order values
+        const hasDuplicates = new Set(sortOrders).size !== sortOrders.length;
+        if (hasDuplicates) {
+            return next(new AppError('Duplicate sort_order values are not allowed.', 400, true));
+        }
+
+        // 4. Verify all IDs exist in leadership table
+        const existingLeaders = await prisma.leadership.findMany({
+            where: { id: { in: ids } },
+            select: { id: true }
+        });
+        const existingIds = new Set(existingLeaders.map(l => l.id));
+        for (const id of ids) {
+            if (!existingIds.has(id)) {
+                return next(new AppError(`Invalid leader ID: ${id}`, 400, true));
+            }
+        }
+
+        // 5. Update sort_order inside a transaction
+        const updatePromises = order.map(item =>
+            prisma.leadership.update({
+                where: { id: item.id },
+                data: { sort_order: item.sort_order }
+            })
+        );
+
+        try {
+            await prisma.$transaction(updatePromises);
+        } catch (txError) {
+            console.error('[ReorderLeadership] DB Transaction failed:', txError.message);
+            return next(new AppError('Failed to update order. Please try again.', 500, true));
+        }
+
+        // Log admin activity
+        await logActivity({
+            userId: req.user.userId,
+            action: 'update',
+            logType: 'Leadership',
+            entity: 'Leadership',
+            description: `Reordered leadership profiles. Updated ${order.length} items.`,
+            metadata: { count: order.length }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Leadership order updated successfully.'
+        });
+    } catch (error) {
+        next(new AppError(error.message, 500, true));
+    }
+};
+
 export {
     createLeadership,
     getAllLeadership,
     getLeadershipById,
     updateLeadershipById,
     deleteLeadershipById,
+    reorderLeadership,
 };

@@ -302,6 +302,7 @@ model Leadership {
   end_year     String?
   social_media Json? // { linkedin, twitter, instagram, etc. }
   status       LeadershipStatus @default(draft)
+  sort_order   Int?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 }

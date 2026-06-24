@@ -9,9 +9,10 @@ const getAllLeadership = async (req, res, next) => {
             where: {
                 status: 'published',
             },
-            orderBy: {
-                createdAt: 'desc',
-            },
+            orderBy: [
+                { sort_order: { sort: 'asc', nulls: 'last' } },
+                { createdAt: 'desc' }
+            ],
         });
 
         res.status(200).json({
