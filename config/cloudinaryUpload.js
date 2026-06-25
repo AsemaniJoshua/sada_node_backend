@@ -95,8 +95,51 @@ const deleteMultipleImagesFromCloudinary = async (publicIds) => {
     }
 };
 
+/**
+ * Intercept html/markdown content, upload any base64 inline images to Cloudinary,
+ * and replace the base64 src with the resulting Cloudinary HTTPS URL.
+ * @param {String} htmlContent - Raw HTML/Markdown string from rich-text editor
+ * @param {String} folder - Cloudinary folder name
+ * @returns {Promise<String>} Cleaned HTML/Markdown content with CDN URLs
+ */
+const processRichTextImages = async (htmlContent, folder = 'rich-text') => {
+    if (!htmlContent || typeof htmlContent !== 'string') return htmlContent;
+
+    // Regex to match base64 data URIs inside img src attributes
+    const regex = /src=["'](data:image\/[a-zA-Z+.-]+;base64,[^"']+)["']/g;
+    let match;
+    let updatedContent = htmlContent;
+
+    // Collect all unique base64 URIs to prevent redundant uploads
+    const matches = new Set();
+    while ((match = regex.exec(htmlContent)) !== null) {
+        matches.add(match[1]);
+    }
+
+    // Upload each base64 image to Cloudinary and replace it in the content
+    for (const dataUri of matches) {
+        try {
+            // Cloudinary natively supports uploading base64 data URIs
+            const result = await cloudinary.uploader.upload(dataUri, {
+                folder: `sada/${folder}`,
+                resource_type: 'image',
+                quality: 'auto',
+            });
+
+            // Replace all occurrences of this base64 URI with the secure URL
+            updatedContent = updatedContent.split(dataUri).join(result.secure_url);
+        } catch (error) {
+            console.error('[processRichTextImages] Base64 image upload failed:', error.message);
+            // Fallback: keep the original base64 string so the user doesn't lose the image
+        }
+    }
+
+    return updatedContent;
+};
+
 export {
     uploadImageToCloudinary,
     deleteImageFromCloudinary,
     deleteMultipleImagesFromCloudinary,
+    processRichTextImages,
 };

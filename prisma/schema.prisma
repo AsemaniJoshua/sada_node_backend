@@ -207,7 +207,7 @@ model Project {
 // BlogPost model - Blog articles with content and images
 model BlogPost {
   id        String           @id @default(uuid())
-  title     String
+  title     String           @db.LongText
   content   String           @db.LongText
   category  BlogPostCategory
   status    BlogPostStatus   @default(draft)

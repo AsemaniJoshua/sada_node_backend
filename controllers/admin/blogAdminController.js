@@ -1,7 +1,7 @@
 // Admin blog controller - CRUD operations for blog posts with image management
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
-import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary, processRichTextImages } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
@@ -66,11 +66,14 @@ const createBlogPost = async (req, res, next) => {
             }
         }
 
+        // Process base64 rich-text images if present in content
+        const processedContent = await processRichTextImages(content, 'blog/content');
+
         // Create blog post with uploaded images
         const blogPost = await prisma.blogPost.create({
             data: {
                 title: title.trim(),
-                content: content.trim(),
+                content: processedContent.trim(),
                 category,
                 status: status || 'draft',
                 tags: parsedTags,
@@ -287,7 +290,9 @@ const updateBlogPostById = async (req, res, next) => {
         // Build update data (only include provided fields)
         const updateData = {};
         if (title !== undefined) updateData.title = title.trim();
-        if (content !== undefined) updateData.content = content.trim();
+        if (content !== undefined) {
+            updateData.content = (await processRichTextImages(content, 'blog/content')).trim();
+        }
         if (category !== undefined) updateData.category = category;
         if (status !== undefined) updateData.status = status;
         if (parsedTags !== null) updateData.tags = parsedTags;
