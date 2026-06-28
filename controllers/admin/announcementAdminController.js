@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { processRichTextImages } from '../../config/cloudinaryUpload.js';
 import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
 // Create new announcement
@@ -48,11 +49,14 @@ const createAnnouncement = async (req, res, next) => {
             return next(new AppError('Status must be "draft" or "published"', 400, true));
         }
 
+        // Process base64 rich-text images if present in content
+        const processedContent = await processRichTextImages(content, 'announcements/content');
+
         // Create announcement in database
         const announcement = await prisma.announcement.create({
             data: {
                 title: title.trim(),
-                content: content.trim(),
+                content: processedContent.trim(),
                 priority: priority || 'low',
                 status: status || 'draft',
                 start_date: startDate,
@@ -215,7 +219,7 @@ const updateAnnouncementById = async (req, res, next) => {
             if (!content.trim()) {
                 return next(new AppError('Content cannot be empty', 400, true));
             }
-            updateData.content = content.trim();
+            updateData.content = (await processRichTextImages(content, 'announcements/content')).trim();
         }
 
         // Update priority if provided

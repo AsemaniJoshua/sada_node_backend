@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { processRichTextImages } from '../../config/cloudinaryUpload.js';
 
 // Create new FAQ
 const createFAQ = async (req, res, next) => {
@@ -26,11 +27,14 @@ const createFAQ = async (req, res, next) => {
             return next(new AppError('Status must be either "published" or "draft"', 400, true));
         }
 
+        // Process base64 rich-text images if present in answer
+        const processedAnswer = await processRichTextImages(answer, 'faqs/answers');
+
         // Create FAQ in database
         const faq = await prisma.FAQ.create({
             data: {
                 question: question.trim(),
-                answer: answer.trim(),
+                answer: processedAnswer.trim(),
                 category: category.trim(),
                 status: status || 'draft',
             },
@@ -141,7 +145,7 @@ const updateFAQById = async (req, res, next) => {
             if (!answer.trim()) {
                 return next(new AppError('Answer cannot be empty', 400, true));
             }
-            updateData.answer = answer.trim();
+            updateData.answer = (await processRichTextImages(answer, 'faqs/answers')).trim();
         }
 
         // Update category if provided

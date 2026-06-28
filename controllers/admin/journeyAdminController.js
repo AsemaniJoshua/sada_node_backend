@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { processRichTextImages } from '../../config/cloudinaryUpload.js';
 
 // Create new journey milestone
 const createJourney = async (req, res, next) => {
@@ -30,12 +31,15 @@ const createJourney = async (req, res, next) => {
             return next(new AppError('Status must be either "published" or "draft"', 400, true));
         }
 
+        // Process base64 rich-text images if present in description
+        const processedDescription = await processRichTextImages(description, 'journey/content');
+
         // Create journey in database
         const journey = await prisma.journey.create({
             data: {
                 year: year.trim(),
                 title: title.trim(),
-                description: description.trim(),
+                description: processedDescription.trim(),
                 category: category.trim(),
                 status: status || 'draft',
             },
@@ -154,7 +158,7 @@ const updateJourneyById = async (req, res, next) => {
             if (!description.trim()) {
                 return next(new AppError('Description cannot be empty', 400, true));
             }
-            updateData.description = description.trim();
+            updateData.description = (await processRichTextImages(description, 'journey/content')).trim();
         }
 
         // Update category if provided

@@ -1,7 +1,7 @@
 // Admin events controller - CRUD operations with image management
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
-import { uploadImageToCloudinary, deleteImageFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { uploadImageToCloudinary, deleteImageFromCloudinary, processRichTextImages } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
@@ -50,13 +50,16 @@ const createEvent = async (req, res, next) => {
             throw uploadError;
         }
 
+        // Process base64 rich-text images if present in description
+        const processedDescription = await processRichTextImages(description, 'events/content');
+
         // Create event with uploaded banner
         const event = await prisma.event.create({
             data: {
                 title: title.trim(),
                 event_type: event_type.trim(),
                 location: location.trim(),
-                description: description.trim(),
+                description: processedDescription.trim(),
                 event_banner: uploadedBanner,
                 start_date: eventDate,
                 start_time: start_time.trim(),
@@ -252,7 +255,9 @@ const updateEventById = async (req, res, next) => {
         if (title !== undefined) updateData.title = title.trim();
         if (event_type !== undefined) updateData.event_type = event_type.trim();
         if (location !== undefined) updateData.location = location.trim();
-        if (description !== undefined) updateData.description = description.trim();
+        if (description !== undefined) {
+            updateData.description = (await processRichTextImages(description, 'events/content')).trim();
+        }
         if (eventDate !== null) updateData.start_date = eventDate;
         if (start_time !== undefined) updateData.start_time = start_time.trim();
         if (status !== undefined) updateData.status = status.toLowerCase();

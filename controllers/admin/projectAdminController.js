@@ -1,7 +1,7 @@
 // Admin projects controller - CRUD operations with image management
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
-import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary } from '../../config/cloudinaryUpload.js';
+import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary, processRichTextImages } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
 
@@ -82,11 +82,14 @@ const createProject = async (req, res, next) => {
             }
         }
 
+        // Process base64 rich-text images if present in description
+        const processedDescription = await processRichTextImages(description, 'projects/content');
+
         // Create project with uploaded images
         const project = await prisma.project.create({
             data: {
                 title,
-                description,
+                description: processedDescription,
                 budget: parsedBudget,
                 category,
                 progress: parsedProgress,
@@ -329,7 +332,9 @@ const updateProjectById = async (req, res, next) => {
         // Build update data (only include provided fields)
         const updateData = {};
         if (title !== undefined) updateData.title = title;
-        if (description !== undefined) updateData.description = description;
+        if (description !== undefined) {
+            updateData.description = await processRichTextImages(description, 'projects/content');
+        }
         if (parsedBudget !== undefined) updateData.budget = parsedBudget;
         if (category !== undefined) updateData.category = category;
         if (parsedProgress !== undefined) updateData.progress = parsedProgress;

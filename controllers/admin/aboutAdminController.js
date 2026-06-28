@@ -2,6 +2,7 @@
 import { AppError } from '../../utils/error/AppError.js';
 import { prisma } from '../../config/config.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
+import { processRichTextImages } from '../../config/cloudinaryUpload.js';
 
 /**
  * Create new about record
@@ -25,13 +26,18 @@ const createAbout = async (req, res, next) => {
             throw new AppError('coreValues must be an array', 400, true);
         }
 
+        // Process base64 rich-text images if present in mission, vision, or history
+        const processedMission = await processRichTextImages(mission, 'about/mission');
+        const processedVision = await processRichTextImages(vision, 'about/vision');
+        const processedHistory = await processRichTextImages(history, 'about/history');
+
         // Create about record
         const about = await prisma.about.create({
             data: {
-                mission,
-                vision,
+                mission: processedMission,
+                vision: processedVision,
                 coreValues,
-                history,
+                history: processedHistory,
             },
         });
 
@@ -132,10 +138,10 @@ const updateAboutById = async (req, res, next) => {
 
         // Build update data (only include provided fields)
         const updateData = {};
-        if (mission !== undefined) updateData.mission = mission;
-        if (vision !== undefined) updateData.vision = vision;
+        if (mission !== undefined) updateData.mission = await processRichTextImages(mission, 'about/mission');
+        if (vision !== undefined) updateData.vision = await processRichTextImages(vision, 'about/vision');
         if (coreValues !== undefined) updateData.coreValues = coreValues;
-        if (history !== undefined) updateData.history = history;
+        if (history !== undefined) updateData.history = await processRichTextImages(history, 'about/history');
 
         // Update about record
         const updatedAbout = await prisma.about.update({
