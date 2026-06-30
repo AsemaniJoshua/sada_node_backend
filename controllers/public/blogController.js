@@ -82,4 +82,36 @@ const getBlogPostById = async (req, res, next) => {
     }
 };
 
-export { getAllBlogPosts, getBlogPostById };
+/**
+ * Get published blog post by slug
+ */
+const getBlogPostBySlug = async (req, res, next) => {
+    try {
+        const { slug } = req.params;
+
+        // Validate slug
+        if (!slug) {
+            throw new AppError('Slug is required', 400, true);
+        }
+
+        // Fetch blog post by slug
+        const blogPost = await prisma.blogPost.findUnique({
+            where: { slug },
+        });
+
+        // Check if blog post exists and is published
+        if (!blogPost || blogPost.status !== 'published') {
+            throw new AppError('Blog post not found', 404, true);
+        }
+
+        // Return blog post data
+        res.status(200).json({
+            success: true,
+            data: blogPost,
+        });
+    } catch (error) {
+        next(new AppError(error.message, 500, true));
+    }
+};
+
+export { getAllBlogPosts, getBlogPostById, getBlogPostBySlug };

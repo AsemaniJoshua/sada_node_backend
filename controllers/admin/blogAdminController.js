@@ -4,18 +4,58 @@ import { prisma } from '../../config/config.js';
 import { uploadImageToCloudinary, deleteMultipleImagesFromCloudinary, processRichTextImages } from '../../config/cloudinaryUpload.js';
 import { logActivity } from '../../utils/activity/logActivity.js';
 import { broadcastNotification, saveNotification } from '../../utils/notifications/pushService.js';
+import { slugify } from '../../utils/slug/slugify.js';
+
+/**
+ * Generate a unique slug for a blog post
+ */
+const generateUniqueSlug = async (title, requestedSlug, existingId = null) => {
+    let baseSlug = slugify(requestedSlug || title);
+    if (!baseSlug) {
+        baseSlug = 'post';
+    }
+    
+    let slug = baseSlug;
+    let count = 1;
+    
+    while (true) {
+        const existing = await prisma.blogPost.findFirst({
+            where: {
+                slug,
+                NOT: existingId ? { id: existingId } : undefined
+            }
+        });
+        
+        if (!existing) {
+            return slug;
+        }
+        
+        slug = `${baseSlug}-${count}`;
+        count++;
+    }
+};
 
 /**
  * Create new blog post with optional images and tags
  */
 const createBlogPost = async (req, res, next) => {
     try {
-        const { title, content, category, status, tags } = req.body;
+        const { title, content, category, status, tags, slug, author } = req.body;
         const files = req.files;
 
         // Validate required fields
         if (!title || !content || !category) {
             throw new AppError('title, content, and category are required', 400, true);
+        }
+
+        // Validate author if provided
+        if (author !== undefined && typeof author !== 'string') {
+            throw new AppError('author must be a string', 400, true);
+        }
+
+        // Validate slug if provided
+        if (slug !== undefined && (typeof slug !== 'string' || slug.trim() === '')) {
+            throw new AppError('slug must be a non-empty string', 400, true);
         }
 
         // Validate title is non-empty string
@@ -69,10 +109,15 @@ const createBlogPost = async (req, res, next) => {
         // Process base64 rich-text images if present in content
         const processedContent = await processRichTextImages(content, 'blog/content');
 
+        // Generate unique slug
+        const uniqueSlug = await generateUniqueSlug(title, slug);
+
         // Create blog post with uploaded images
         const blogPost = await prisma.blogPost.create({
             data: {
                 title: title.trim(),
+                slug: uniqueSlug,
+                author: author ? author.trim() : null,
                 content: processedContent.trim(),
                 category,
                 status: status || 'draft',
@@ -212,7 +257,7 @@ const getBlogPostById = async (req, res, next) => {
 const updateBlogPostById = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const { title, content, category, status, tags } = req.body;
+        const { title, content, category, status, tags, slug, author } = req.body;
         const files = req.files;
 
         // Validate ID
@@ -236,6 +281,16 @@ const updateBlogPostById = async (req, res, next) => {
 
         if (content && (typeof content !== 'string' || content.trim() === '')) {
             throw new AppError('content must be a non-empty string', 400, true);
+        }
+
+        // Validate author if provided
+        if (author !== undefined && typeof author !== 'string') {
+            throw new AppError('author must be a string', 400, true);
+        }
+
+        // Validate slug if provided
+        if (slug !== undefined && (typeof slug !== 'string' || slug.trim() === '')) {
+            throw new AppError('slug must be a non-empty string', 400, true);
         }
 
         // Validate category if provided
@@ -297,6 +352,17 @@ const updateBlogPostById = async (req, res, next) => {
         if (status !== undefined) updateData.status = status;
         if (parsedTags !== null) updateData.tags = parsedTags;
         if (uploadedImages !== null) updateData.images = uploadedImages;
+
+        // Handle slug changes
+        if (slug !== undefined) {
+            updateData.slug = await generateUniqueSlug(title || existingBlogPost.title, slug, id);
+        } else if (title !== undefined && (!existingBlogPost.slug || existingBlogPost.slug.trim() === '')) {
+            updateData.slug = await generateUniqueSlug(title, null, id);
+        }
+
+        if (author !== undefined) {
+            updateData.author = author ? author.trim() : null;
+        }
 
         // Update blog post
         const updatedBlogPost = await prisma.blogPost.update({
@@ -402,10 +468,39 @@ const deleteBlogPostById = async (req, res, next) => {
     }
 };
 
+/**
+ * Get blog post by slug (admin view)
+ */
+const getBlogPostBySlug = async (req, res, next) => {
+    try {
+        const { slug } = req.params;
+
+        if (!slug) {
+            throw new AppError('Slug is required', 400, true);
+        }
+
+        const blogPost = await prisma.blogPost.findUnique({
+            where: { slug },
+        });
+
+        if (!blogPost) {
+            throw new AppError('Blog post not found', 404, true);
+        }
+
+        res.status(200).json({
+            success: true,
+            data: blogPost,
+        });
+    } catch (error) {
+        next(new AppError(error.message, 500, true));
+    }
+};
+
 export {
     createBlogPost,
     getAllBlogPosts,
     getBlogPostById,
     updateBlogPostById,
     deleteBlogPostById,
+    getBlogPostBySlug,
 };

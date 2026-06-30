@@ -9,6 +9,7 @@ import {
     getBlogPostById,
     updateBlogPostById,
     deleteBlogPostById,
+    getBlogPostBySlug,
 } from '../../controllers/admin/blogAdminController.js';
 
 const router = express.Router();
@@ -18,6 +19,9 @@ router.post('/', authenticate, authorize('admin'), upload.array('images', 10), c
 
 // Get all blog posts
 router.get('/', authenticate, authorize('admin'), getAllBlogPosts);
+
+// Get blog post by slug
+router.get('/slug/:slug', authenticate, authorize('admin'), getBlogPostBySlug);
 
 // Get blog post by ID
 router.get('/:id', authenticate, authorize('admin'), getBlogPostById);

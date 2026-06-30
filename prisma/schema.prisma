@@ -208,6 +208,8 @@ model Project {
 model BlogPost {
   id        String           @id @default(uuid())
   title     String           @db.LongText
+  slug      String?          @unique @db.VarChar(255)
+  author    String?          @db.VarChar(255)
   content   String           @db.LongText
   category  BlogPostCategory
   status    BlogPostStatus   @default(draft)
