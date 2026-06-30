@@ -31,6 +31,8 @@ export const sendSMS = async (recipients, message) => {
             return num;
         });
 
+        console.log(`[SMSOnlineGH] Sending SMS to ${formattedTo.join(',')}, length: ${message.length} chars`);
+
         const response = await axios.post('https://api.smsonlinegh.com/v5/message/sms/send', {
             text: message,
             type: 0,

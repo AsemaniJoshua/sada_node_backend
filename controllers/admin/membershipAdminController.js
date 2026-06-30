@@ -497,8 +497,8 @@ const approveMembership = async (req, res, next) => {
             console.error('Error sending approval email:', error);
         });
 
-        // Send SMS asynchronously
-        const smsMessage = `Congratulations ${existingMembership.firstName}! Your SADA Membership ID is ${existingMembership.memberId}. Welcome to the family!`;
+        // Send SMS asynchronously (compact template, strictly capped at 150 chars to avoid multi-unit costs)
+        const smsMessage = `Congratulations ${existingMembership.firstName}! Your Member ID is ${existingMembership.memberId}. Welcome to the family!`.substring(0, 155);
         sendSMS(existingMembership.phone, smsMessage).catch(err => {
             console.error('Error sending approval SMS:', err);
         });
@@ -670,8 +670,8 @@ const rejectMembership = async (req, res, next) => {
             console.error('Error sending rejection email:', error);
         });
 
-        // Send SMS asynchronously
-        const smsMessage = `Hello ${existingMembership.firstName}, your SADA membership application status has been updated. Result: Rejected. Reason: ${reason}. Please check your email for details.`;
+        // Send SMS asynchronously (full rejection reason sent)
+        const smsMessage = `Hello ${existingMembership.firstName}, your application was rejected. Reason: ${reason}. Check email for details.`;
         sendSMS(existingMembership.phone, smsMessage).catch(err => {
             console.error('Error sending rejection SMS:', err);
         });
